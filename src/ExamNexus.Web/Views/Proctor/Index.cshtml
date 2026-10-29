@@ -1,0 +1,355 @@
+@model ProctorDashboardDto
+@{
+    ViewData["Title"] = "Real-Time Proctor Command Center";
+    var tenantId = ViewBag.TenantId as string ?? "";
+    var tenantName = ViewBag.TenantName as string ?? "Acme Academy";
+}
+
+@section Styles {
+    <style>
+        .candidate-live-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .candidate-live-card.flagged {
+            border-left: 5px solid #ef4444;
+            background: #fef2f2;
+        }
+
+        .candidate-live-card:not(.flagged) {
+            border-left: 5px solid #10b981;
+        }
+
+        .telemetry-stream-container {
+            max-height: 480px;
+            overflow-y: auto;
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            color: #94a3b8;
+        }
+
+        .telemetry-log-item {
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .telemetry-log-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+    </style>
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="signalr-live-indicator"></span>
+            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 fw-bold">
+                WEBSOCKET COMMAND STREAM ACTIVE
+            </span>
+            <span class="badge bg-light text-secondary border">
+                <i class="fa-solid fa-building me-1 text-primary"></i> @tenantName
+            </span>
+        </div>
+        <h3 class="fw-bold text-dark mb-0 mt-1">Real-Time Proctor Command Center</h3>
+    </div>
+    <div>
+        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 fw-semibold">
+            <i class="fa-solid fa-signal me-1"></i> Hub Connected: <code>/hubs/proctor</code>
+        </span>
+    </div>
+</div>
+
+<!-- Telemetry Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card card-enterprise p-3 h-100">
+            <div class="text-muted small fw-semibold">ACTIVE CANDIDATES NOW</div>
+            <div class="fs-2 fw-bold text-success mt-1" id="activeCandidateCount">@Model.ActiveLiveSessionsCount</div>
+            <div class="text-muted small mt-1">Streaming live telemetry</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-enterprise p-3 h-100">
+            <div class="text-muted small fw-semibold">FLAGGED CHEATING ALERTS</div>
+            <div class="fs-2 fw-bold text-danger mt-1" id="flaggedAlertsCount">@Model.FlaggedCheatingCount</div>
+            <div class="text-muted small mt-1">Exceeded allowed violations</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-enterprise p-3 h-100">
+            <div class="text-muted small fw-semibold">COMPLETED SESSIONS</div>
+            <div class="fs-2 fw-bold text-primary mt-1">@Model.CompletedSessionsCount</div>
+            <div class="text-muted small mt-1">Graded and archived</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-enterprise p-3 h-100">
+            <div class="text-muted small fw-semibold">AVERAGE SCORE</div>
+            <div class="fs-2 fw-bold text-dark mt-1">@Model.AverageCandidateScorePercent%</div>
+            <div class="text-muted small mt-1">Tenant cohort aggregate</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Active Candidates Monitor Column -->
+    <div class="col-lg-7">
+        <div class="card card-enterprise">
+            <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-dark">
+                    <i class="fa-solid fa-users-viewfinder me-2 text-primary"></i> Active Candidate Sessions
+                </h5>
+                <span class="badge bg-light text-dark border"><span id="sessionListBadge">@Model.ActiveSessions.Count</span> In-Progress</span>
+            </div>
+            <div class="card-body p-4" id="candidateCardsContainer">
+                @if (Model.ActiveSessions.Any())
+                {
+                    @foreach (var s in Model.ActiveSessions)
+                    {
+                        var isCardFlagged = s.IsFlagged || s.TabSwitchCount > s.MaxTabSwitchesAllowed;
+                        <div class="candidate-live-card @(isCardFlagged ? "flagged" : "")" id="card_@s.SessionId">
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-2 mb-2">
+                                <div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <h5 class="fw-bold text-dark mb-0">@s.CandidateName</h5>
+                                        <span class="badge bg-light text-dark border small"><code>@s.UserCode</code></span>
+                                    </div>
+                                    <div class="text-muted small">@s.CandidateEmail &bull; <strong class="text-primary">@s.ExamTitle</strong></div>
+                                </div>
+                                <div class="text-md-end">
+                                    <span class="badge bg-dark font-monospace px-2.5 py-1.5" id="timer_@s.SessionId">
+                                        <i class="fa-regular fa-clock me-1 text-info"></i> <span class="rem-time">@s.TimeRemainingSeconds</span>s left
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mt-3 pt-3 border-top">
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="badge @(s.TabSwitchCount > 0 ? "bg-danger" : "bg-light text-dark border")" id="tab_badge_@s.SessionId">
+                                        <i class="fa-solid fa-shield-halved me-1"></i> <span id="tab_val_@s.SessionId">@s.TabSwitchCount</span> / @s.MaxTabSwitchesAllowed Tab Switches
+                                    </span>
+
+                                    @if (isCardFlagged)
+                                    {
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold">
+                                            <i class="fa-solid fa-triangle-exclamation me-1"></i> SUSPICIOUS
+                                        </span>
+                                    }
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="sendProctorWarning('@s.SessionId', '@s.CandidateName')">
+                                        <i class="fa-solid fa-bell me-1"></i> Send Warning
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="openDisqualifyModal('@s.SessionId', '@s.CandidateName')">
+                                        <i class="fa-solid fa-ban me-1"></i> Disqualify
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted" id="noActiveSessionsMsg">
+                        <i class="fa-solid fa-circle-check fs-2 text-success mb-2"></i>
+                        <div>No candidates currently in live exam sessions.</div>
+                        <div class="small">Candidates launching exams will instantly stream into this console via WebSockets.</div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Telemetry Stream Column -->
+    <div class="col-lg-5">
+        <div class="card card-enterprise h-100">
+            <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0 text-dark">
+                    <i class="fa-solid fa-terminal me-2 text-dark"></i> Real-Time Telemetry Stream
+                </h6>
+                <span class="badge bg-dark text-white font-monospace">SignalR Live</span>
+            </div>
+            <div class="card-body p-3">
+                <div class="telemetry-stream-container" id="telemetryStream">
+                    @if (Model.RecentEvents.Any())
+                    {
+                        @foreach (var ev in Model.RecentEvents)
+                        {
+                            var colorClass = ev.Severity == ProctorSeverity.Critical ? "text-danger" : ev.Severity == ProctorSeverity.Warning ? "text-warning" : "text-info";
+                            <div class="telemetry-log-item">
+                                <div>
+                                    <span class="badge @(ev.Severity == ProctorSeverity.Critical ? "bg-danger" : ev.Severity == ProctorSeverity.Warning ? "bg-warning text-dark" : "bg-secondary") me-1">
+                                        @ev.EventType
+                                    </span>
+                                    <strong class="text-light">@ev.CandidateName:</strong>
+                                    <span class="@colorClass ms-1">@ev.Details</span>
+                                </div>
+                                <span class="text-white-50 small text-nowrap">@ev.TimestampUtc.ToString("HH:mm:ss")</span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-white-50 text-center py-4 small">Waiting for telemetry heartbeat packets...</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Disqualify Candidate -->
+<div class="modal fade" id="disqualifyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header bg-danger text-white p-4">
+                <h5 class="modal-title fw-bold">
+                    <i class="fa-solid fa-gavel me-2"></i> Disqualify Candidate Session
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="TerminateSession" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="sessionId" id="disqualifySessionId" />
+                <div class="modal-body p-4">
+                    <h5 class="fw-bold text-dark mb-2" id="disqualifyCandidateName">Candidate</h5>
+                    <p class="text-muted small mb-3">
+                        Terminating this attempt will immediately lock the candidate's browser screen, flag their attempt with cheating severity, and close the session.
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">Reason for Termination</label>
+                        <select name="reason" class="form-select" required>
+                            <option value="Excessive browser tab switching detected">Excessive browser tab switching detected</option>
+                            <option value="Unauthorized application or secondary monitor in use">Unauthorized application or secondary monitor in use</option>
+                            <option value="Communication with external parties observed">Communication with external parties observed</option>
+                            <option value="Candidate refused proctor compliance instructions">Candidate refused proctor compliance instructions</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light p-3">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger px-4 fw-bold">
+                        <i class="fa-solid fa-ban me-1"></i> Terminate &amp; Disqualify
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const tenantId = '@tenantId';
+
+        // Initialize SignalR connection
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/hubs/proctor")
+            .withAutomaticReconnect()
+            .build();
+
+        // Append item to live telemetry stream
+        function logTelemetry(type, name, details, severity, time) {
+            const stream = document.getElementById('telemetryStream');
+            const item = document.createElement('div');
+            item.className = 'telemetry-log-item';
+
+            let badgeClass = severity === 'Critical' ? 'bg-danger' : severity === 'Warning' ? 'bg-warning text-dark' : 'bg-secondary';
+            let colorClass = severity === 'Critical' ? 'text-danger' : severity === 'Warning' ? 'text-warning' : 'text-info';
+
+            item.innerHTML = `
+                <div>
+                    <span class="badge ${badgeClass} me-1">${type}</span>
+                    <strong class="text-light">${name}:</strong>
+                    <span class="${colorClass} ms-1">${details}</span>
+                </div>
+                <span class="text-white-50 small text-nowrap">${time || new Date().toLocaleTimeString()}</span>
+            `;
+            stream.prepend(item);
+        }
+
+        // Live Event: Candidate Tab Switch Violation
+        connection.on("CandidateViolationAlert", (sessionId, candidateName, violationType, tabSwitchCount) => {
+            logTelemetry(violationType, candidateName, `Tab switch detected! Total switches: ${tabSwitchCount}`, 'Warning');
+
+            const valEl = document.getElementById(`tab_val_${sessionId}`);
+            if (valEl) {
+                valEl.innerText = tabSwitchCount;
+                const badge = document.getElementById(`tab_badge_${sessionId}`);
+                if (badge) {
+                    badge.className = 'badge bg-danger';
+                }
+            }
+
+            const card = document.getElementById(`card_${sessionId}`);
+            if (card) {
+                card.classList.add('flagged');
+            }
+        });
+
+        // Live Event: Candidate Heartbeat
+        connection.on("CandidateHeartbeatReceived", (sessionId, candidateName, remainingSeconds) => {
+            const timerEl = document.getElementById(`timer_${sessionId}`);
+            if (timerEl) {
+                const hrs = Math.floor(remainingSeconds / 3600);
+                const mins = Math.floor((remainingSeconds % 3600) / 60);
+                const secs = remainingSeconds % 60;
+                timerEl.innerHTML = `<i class="fa-regular fa-clock me-1 text-info"></i> ${mins}m ${secs}s left`;
+            }
+        });
+
+        // Live Event: Candidate Joined
+        connection.on("CandidateJoinedExam", (sessionId, candidateName, examTitle) => {
+            logTelemetry('JOINED', candidateName, `Started session for ${examTitle}`, 'Info');
+            const noMsg = document.getElementById('noActiveSessionsMsg');
+            if (noMsg) noMsg.style.display = 'none';
+        });
+
+        // Live Event: Candidate Submitted
+        connection.on("CandidateSubmitted", (sessionId, candidateName, score, percentage) => {
+            logTelemetry('SUBMITTED', candidateName, `Completed exam. Score: ${score} (${percentage}%)`, 'Info');
+            const card = document.getElementById(`card_${sessionId}`);
+            if (card) {
+                card.remove();
+            }
+        });
+
+        connection.start().then(() => {
+            console.log("Proctor connected to Hub.");
+            if (tenantId) {
+                connection.invoke("JoinTenantProctorRoom", tenantId).catch(err => console.error(err));
+            }
+        }).catch(err => console.error("SignalR Proctor connection error:", err));
+
+        // Proctor Actions
+        function sendProctorWarning(sessionId, name) {
+            const warningMsg = prompt(`Enter warning message to send to candidate ${name}:`, "Please keep your focus strictly on this assessment window.");
+            if (warningMsg && connection.state === signalR.HubConnectionState.Connected) {
+                connection.invoke("SendProctorWarningToCandidate", sessionId, warningMsg)
+                    .then(() => alert(`Warning dispatched to ${name}.`))
+                    .catch(err => console.error(err));
+            }
+        }
+
+        function openDisqualifyModal(sessionId, name) {
+            document.getElementById('disqualifySessionId').value = sessionId;
+            document.getElementById('disqualifyCandidateName').innerText = name;
+            const modal = new bootstrap.Modal(document.getElementById('disqualifyModal'));
+            modal.show();
+        }
+    </script>
+}

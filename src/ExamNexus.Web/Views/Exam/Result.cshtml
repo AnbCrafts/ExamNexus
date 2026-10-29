@@ -1,0 +1,107 @@
+@model ExamResultDto
+@{
+    ViewData["Title"] = "Assessment Results: " + Model.ExamTitle;
+}
+
+<div class="row justify-content-center py-4">
+    <div class="col-lg-8 col-xl-7">
+        <div class="card card-enterprise overflow-hidden border-0 shadow-lg" style="border-radius: 16px;">
+            <!-- Header Banner based on Pass / Fail -->
+            <div class="p-5 text-center text-white" style="background: @(Model.HasPassed ? "linear-gradient(135deg, #065f46 0%, #059669 100%)" : "linear-gradient(135deg, #991b1b 0%, #dc2626 100%)");">
+                <div class="mb-3">
+                    @if (Model.HasPassed)
+                    {
+                        <div class="d-inline-flex align-items-center justify-content-center bg-white bg-opacity-20 rounded-circle" style="width: 80px; height: 80px;">
+                            <i class="fa-solid fa-award text-white fs-1"></i>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-inline-flex align-items-center justify-content-center bg-white bg-opacity-20 rounded-circle" style="width: 80px; height: 80px;">
+                            <i class="fa-solid fa-circle-xmark text-white fs-1"></i>
+                        </div>
+                    }
+                </div>
+
+                <h2 class="fw-bold mb-1">@(Model.HasPassed ? "Assessment Passed!" : "Assessment Not Passed")</h2>
+                <p class="text-white-50 mb-0">Candidate: @Model.CandidateName &bull; @Model.ExamTitle</p>
+            </div>
+
+            <!-- Body Scores & Details -->
+            <div class="card-body p-4 p-md-5">
+                @if (Model.IsFlagged)
+                {
+                    <div class="alert alert-danger d-flex align-items-center gap-3 p-3 mb-4 rounded-3 border-0">
+                        <i class="fa-solid fa-triangle-exclamation fs-3 text-danger"></i>
+                        <div>
+                            <strong class="text-danger">Proctor Audit Flagged:</strong>
+                            <div class="small text-danger-emphasis">@(Model.FlagReason ?? "Suspicious activity or excessive tab-switches recorded during assessment session.")</div>
+                        </div>
+                    </div>
+                }
+
+                <div class="row g-3 text-center mb-4">
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="text-muted small fw-semibold">FINAL SCORE</div>
+                            <div class="fs-2 fw-bold text-dark mt-1">@Model.FinalScore <span class="fs-6 text-muted">/ @Model.TotalMarks</span></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="text-muted small fw-semibold">PERCENTAGE</div>
+                            <div class="fs-2 fw-bold @(Model.HasPassed ? "text-success" : "text-danger") mt-1">@Model.Percentage%</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="text-muted small fw-semibold">STATUS</div>
+                            <div class="fs-2 fw-bold mt-1">
+                                @if (Model.HasPassed)
+                                {
+                                    <span class="text-success"><i class="fa-solid fa-circle-check fs-4 me-1"></i> PASS</span>
+                                }
+                                else
+                                {
+                                    <span class="text-danger"><i class="fa-solid fa-circle-xmark fs-4 me-1"></i> FAIL</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-light rounded-3 mb-4">
+                    <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-clipboard-list me-1 text-primary"></i> Assessment Summary</h6>
+                    <div class="d-flex justify-content-between py-2 border-bottom small">
+                        <span class="text-muted">Assessment Title:</span>
+                        <span class="fw-semibold text-dark">@Model.ExamTitle</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom small">
+                        <span class="text-muted">Submission Timestamp:</span>
+                        <span class="fw-semibold text-dark">@Model.CompletedAtUtc?.ToString("yyyy-MM-dd HH:mm:ss") UTC</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom small">
+                        <span class="text-muted">Proctor Security Status:</span>
+                        @if (Model.IsFlagged)
+                        {
+                            <span class="badge bg-danger">Flagged Under Audit</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Verified Clean Session</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <a asp-controller="Dashboard" asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="fa-solid fa-arrow-left me-1"></i> Return to Dashboard
+                    </a>
+                    <a asp-controller="Exam" asp-action="Index" class="btn btn-brand-primary">
+                        <i class="fa-solid fa-list-check me-1"></i> Assessment Catalog
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

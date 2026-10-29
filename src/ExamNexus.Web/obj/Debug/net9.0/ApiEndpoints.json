@@ -1,0 +1,34 @@
+[
+  {
+    "ContainingType": "ExamNexus.Web.Controllers.Api.AuthController",
+    "Method": "Refresh",
+    "RelativePath": "api/v1/auth/refresh",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "ExamNexus.Application.DTOs.RefreshTokenRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "ExamNexus.Web.Controllers.Api.AuthController",
+    "Method": "GenerateToken",
+    "RelativePath": "api/v1/auth/token",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "ExamNexus.Application.DTOs.LoginRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  }
+]

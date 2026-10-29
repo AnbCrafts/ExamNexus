@@ -1,0 +1,425 @@
+@model ExamSessionLiveDto
+@{
+    ViewData["Title"] = "Live Assessment: " + Model.ExamTitle;
+    Layout = "_Layout";
+    var tenantId = ViewBag.TenantId as string ?? "";
+}
+
+@section Styles {
+    <style>
+        .exam-sticky-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            background: #ffffff;
+            border-bottom: 2px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            padding: 12px 20px;
+            margin-bottom: 24px;
+            border-radius: 12px;
+        }
+
+        .timer-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.25rem;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 8px;
+            background: #1e1b4b;
+            color: #38bdf8;
+            letter-spacing: 1px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .timer-warning {
+            background: #7f1d1d !important;
+            color: #fca5a5 !important;
+            animation: pulse-red 1s infinite alternate;
+        }
+
+        @@keyframes pulse-red {
+            from { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            to { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        }
+
+        .question-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: all 0.2s ease;
+        }
+
+        .question-card:hover {
+            border-color: #cbd5e1;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .option-label:hover {
+            background-color: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        .option-radio:checked + .option-label {
+            background-color: #eef2ff;
+            border-color: #6366f1;
+            color: #312e81;
+            box-shadow: 0 2px 4px rgba(99, 102, 241, 0.15);
+        }
+
+        .q-nav-pill {
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border: 1.5px solid #cbd5e1;
+            background: #ffffff;
+            color: #475569;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .q-nav-pill.answered {
+            background: #10b981;
+            border-color: #10b981;
+            color: #ffffff;
+        }
+
+        .q-nav-pill:hover {
+            border-color: #4f46e5;
+            color: #4f46e5;
+        }
+
+        .q-nav-pill.answered:hover {
+            background: #059669;
+            color: #ffffff;
+        }
+    </style>
+}
+
+<!-- Sticky Timer & Proctoring Status Header -->
+<div class="exam-sticky-bar">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 fw-bold">
+                    <span class="signalr-live-indicator me-1"></span> WEBSOCKET PROCTORED
+                </span>
+                <span class="badge bg-light text-secondary border" id="autosaveStatus">
+                    <i class="fa-solid fa-cloud-arrow-up text-primary me-1"></i> Autosave Active
+                </span>
+            </div>
+            <h5 class="fw-bold text-dark mb-0 mt-1">@Model.ExamTitle</h5>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+            <div class="badge bg-light text-dark border p-2 text-start d-none d-md-block">
+                <div class="text-muted small" style="font-size: 0.72rem;">TAB SWITCHES</div>
+                <div class="fw-bold text-danger" id="tabSwitchBadge">
+                    <i class="fa-solid fa-shield-halved me-1"></i> <span id="tabCountText">@Model.TabSwitchCount</span> / @Model.MaxTabSwitchesAllowed Max
+                </div>
+            </div>
+
+            <div class="timer-badge" id="countdownTimer">
+                <i class="fa-regular fa-clock"></i>
+                <span id="timerText">--:--</span>
+            </div>
+
+            <button type="button" class="btn btn-brand-primary fw-bold px-3 py-2" data-bs-toggle="modal" data-bs-target="#submitConfirmModal">
+                <i class="fa-solid fa-circle-check me-1"></i> Submit Exam
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Warning Toast / Alert Bar for Tab Switches -->
+<div class="alert alert-danger d-none shadow-sm mb-4 border-0" id="cheatWarningAlert" role="alert">
+    <div class="d-flex align-items-center gap-3">
+        <i class="fa-solid fa-triangle-exclamation fs-3 text-danger"></i>
+        <div>
+            <strong class="text-danger">Proctor Alert: Browser Tab Switch Detected!</strong>
+            <div class="small text-danger-emphasis">
+                Switching windows or tabs is flagged in your audit record. Exceeding @Model.MaxTabSwitchesAllowed switches will automatically disqualify your attempt.
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Questions Column -->
+    <div class="col-lg-9">
+        <form id="examForm" asp-action="Submit" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="sessionId" value="@Model.SessionId" />
+
+            @{ int qIndex = 1; }
+            @foreach (var q in Model.Questions)
+            {
+                <div class="question-card" id="q_@q.QuestionId">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="badge bg-primary bg-opacity-10 text-primary fw-bold px-2.5 py-1.5 fs-6">
+                            Question @qIndex of @Model.Questions.Count
+                        </span>
+                        <span class="badge bg-light text-secondary border">
+                            @q.Points Points
+                        </span>
+                    </div>
+
+                    <h5 class="fw-semibold text-dark mb-4" style="line-height: 1.5;">@q.Text</h5>
+
+                    <div class="options-container">
+                        @foreach (var opt in q.Options)
+                        {
+                            var inputId = $"opt_{q.QuestionId}_{opt.OptionId}";
+                            var isChecked = q.SelectedOptionId == opt.OptionId;
+
+                            <div>
+                                <input type="radio" 
+                                       name="q_@q.QuestionId" 
+                                       id="@inputId" 
+                                       value="@opt.OptionId" 
+                                       class="option-radio d-none" 
+                                       @(isChecked ? "checked" : "")
+                                       onchange="saveAnswer('@Model.SessionId', '@q.QuestionId', '@opt.OptionId', '@qIndex')" />
+                                
+                                <label for="@inputId" class="option-label">
+                                    <div class="rounded-circle border d-flex align-items-center justify-content-center" style="width: 22px; height: 22px;">
+                                        <i class="fa-solid fa-circle text-primary @(isChecked ? "" : "d-none")" id="dot_@inputId" style="font-size: 0.6rem;"></i>
+                                    </div>
+                                    <span>@opt.OptionText</span>
+                                </label>
+                            </div>
+                        }
+                    </div>
+                </div>
+                qIndex++;
+            }
+        </form>
+    </div>
+
+    <!-- Right Sidebar: Question Palette & Proctor Status -->
+    <div class="col-lg-3">
+        <div class="card card-enterprise mb-4 sticky-top" style="top: 90px;">
+            <div class="card-header bg-white py-3 px-3">
+                <h6 class="fw-bold text-dark mb-0">
+                    <i class="fa-solid fa-table-cells me-1 text-primary"></i> Question Palette
+                </h6>
+            </div>
+            <div class="card-body p-3">
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    @{ int navIndex = 1; }
+                    @foreach (var q in Model.Questions)
+                    {
+                        var answeredClass = q.SelectedOptionId.HasValue ? "answered" : "";
+                        <a href="#q_@q.QuestionId" class="q-nav-pill @answeredClass" id="nav_pill_@navIndex">
+                            @navIndex
+                        </a>
+                        navIndex++;
+                    }
+                </div>
+
+                <div class="border-top pt-3 small text-muted">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="rounded bg-success" style="width: 14px; height: 14px; display: inline-block;"></span>
+                        <span>Answered</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="rounded border" style="width: 14px; height: 14px; display: inline-block; background: #fff;"></span>
+                        <span>Not Answered</span>
+                    </div>
+                </div>
+
+                <hr />
+
+                <button type="button" class="btn btn-brand-primary w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#submitConfirmModal">
+                    <i class="fa-solid fa-paper-plane me-1"></i> Finish &amp; Submit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Confirm Exam Submission -->
+<div class="modal fade" id="submitConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header bg-dark text-white p-4">
+                <h5 class="modal-title fw-bold">
+                    <i class="fa-solid fa-clipboard-check text-success me-2"></i> Confirm Assessment Submission
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-dark mb-3">
+                    Are you ready to submit your assessment? Once submitted, your answers will be automatically graded and the proctoring session concluded.
+                </p>
+                <div class="alert alert-info py-2 px-3 small rounded-3 mb-0">
+                    <i class="fa-solid fa-circle-info me-1"></i> All selected responses have been saved in real time to the cloud database.
+                </div>
+            </div>
+            <div class="modal-footer bg-light p-3">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Review Answers</button>
+                <button type="button" class="btn btn-success px-4 fw-bold" onclick="document.getElementById('examForm').submit();">
+                    <i class="fa-solid fa-check me-1"></i> Submit &amp; View Result
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const sessionId = '@Model.SessionId';
+        let remainingSeconds = @Model.TimeRemainingSeconds;
+        let tabSwitchCount = @Model.TabSwitchCount;
+        const maxTabSwitches = @Model.MaxTabSwitchesAllowed;
+
+        // 1. Countdown Timer
+        function updateTimer() {
+            if (remainingSeconds <= 0) {
+                document.getElementById('timerText').innerText = "00:00:00";
+                alert("Time has expired. Your assessment will now be auto-submitted.");
+                document.getElementById('examForm').submit();
+                return;
+            }
+
+            const hrs = Math.floor(remainingSeconds / 3600);
+            const mins = Math.floor((remainingSeconds % 3600) / 60);
+            const secs = remainingSeconds % 60;
+
+            const formatted = 
+                (hrs > 0 ? (hrs < 10 ? '0' : '') + hrs + ':' : '') +
+                (mins < 10 ? '0' : '') + mins + ':' +
+                (secs < 10 ? '0' : '') + secs;
+
+            document.getElementById('timerText').innerText = formatted;
+
+            if (remainingSeconds <= 300) { // Under 5 mins
+                document.getElementById('countdownTimer').classList.add('timer-warning');
+            }
+
+            remainingSeconds--;
+        }
+
+        setInterval(updateTimer, 1000);
+        updateTimer();
+
+        // 2. AJAX Save Answer
+        async function saveAnswer(sessionId, questionId, optionId, navIndex) {
+            // Update radio styling
+            document.querySelectorAll(`input[name="q_${questionId}"]`).forEach(r => {
+                const dot = document.getElementById(`dot_${r.id}`);
+                if (dot) {
+                    if (r.value === optionId) dot.classList.remove('d-none');
+                    else dot.classList.add('d-none');
+                }
+            });
+
+            // Mark question palette pill as answered
+            const pill = document.getElementById(`nav_pill_${navIndex}`);
+            if (pill) pill.classList.add('answered');
+
+            const statusEl = document.getElementById('autosaveStatus');
+            statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-warning me-1"></i> Saving...';
+
+            try {
+                const response = await fetch('/Exam/SaveAnswer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sessionId: sessionId,
+                        questionId: questionId,
+                        selectedOptionId: optionId,
+                        textResponse: null
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    statusEl.innerHTML = `<i class="fa-solid fa-circle-check text-success me-1"></i> Saved at ${data.savedAt}`;
+                } else {
+                    statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-danger me-1"></i> Save failed, retrying...';
+                }
+            } catch (err) {
+                console.error("Autosave error:", err);
+                statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-danger me-1"></i> Connection lost';
+            }
+        }
+
+        // 3. Real-Time SignalR Proctoring Engine
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/hubs/proctor")
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on("ReceiveWarning", (message) => {
+            alert(`⚠️ PROCTOR WARNING:\n${message}`);
+        });
+
+        connection.on("SessionTerminated", (reason) => {
+            alert(`⛔ DISQUALIFIED BY PROCTOR:\n${reason}`);
+            window.location.href = `/Exam/Result?sessionId=${sessionId}`;
+        });
+
+        connection.start().then(() => {
+            console.log("Connected to ProctorHub.");
+            connection.invoke("JoinExamSession", sessionId).catch(err => console.error(err));
+
+            // Continuous Heartbeat every 15 seconds
+            setInterval(() => {
+                if (connection.state === signalR.HubConnectionState.Connected) {
+                    connection.invoke("SendHeartbeat", sessionId, remainingSeconds).catch(err => console.error(err));
+                }
+            }, 15000);
+        }).catch(err => console.error("SignalR connection error:", err));
+
+        // 4. Anti-Cheat: Tab Switch & Window Blur Detection
+        function handleTabSwitch() {
+            tabSwitchCount++;
+            document.getElementById('tabCountText').innerText = tabSwitchCount;
+            const warningAlert = document.getElementById('cheatWarningAlert');
+            warningAlert.classList.remove('d-none');
+
+            // Dispatch to SignalR Hub
+            if (connection.state === signalR.HubConnectionState.Connected) {
+                connection.invoke("ReportTabSwitch", sessionId).catch(err => console.error(err));
+            }
+
+            if (tabSwitchCount > maxTabSwitches) {
+                alert(`You have exceeded the maximum allowable tab switches (${maxTabSwitches}). Your exam attempt is flagged for review.`);
+            }
+        }
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+                handleTabSwitch();
+            }
+        });
+
+        window.addEventListener("blur", () => {
+            // Optional: window blur also counts towards anti-cheat monitoring
+        });
+    </script>
+}

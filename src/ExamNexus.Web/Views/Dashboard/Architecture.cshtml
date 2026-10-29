@@ -1,0 +1,174 @@
+@{
+    ViewData["Title"] = "System Architecture & Engineering Specification";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-11 col-xl-10">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <h3 class="fw-bold text-dark mb-1">
+                    <i class="fa-solid fa-layer-group text-primary me-2"></i> System Architecture &amp; SaaS Specification
+                </h3>
+                <p class="text-muted mb-0">Deep architectural overview of Multi-Tenancy, SignalR Proctored Telemetry, and Clean Architecture.</p>
+            </div>
+            <a asp-controller="Dashboard" asp-action="Index" class="btn btn-outline-secondary">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <div class="card card-enterprise mb-4">
+            <div class="card-header bg-white p-3">
+                <ul class="nav nav-pills card-header-pills" id="archTabs" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active fw-semibold" id="tenancy-tab" data-bs-toggle="pill" data-bs-target="#tenancy" type="button" role="tab">
+                            <i class="fa-solid fa-building me-1"></i> 1. Multi-Tenant Partitioning
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link fw-semibold" id="proctor-tab" data-bs-toggle="pill" data-bs-target="#proctor" type="button" role="tab">
+                            <i class="fa-solid fa-shield-halved me-1"></i> 2. Live SignalR Proctoring
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link fw-semibold" id="grading-tab" data-bs-toggle="pill" data-bs-target="#grading" type="button" role="tab">
+                            <i class="fa-solid fa-bolt me-1"></i> 3. AJAX Sync &amp; Auto-Grading
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link fw-semibold" id="db-tab" data-bs-toggle="pill" data-bs-target="#db" type="button" role="tab">
+                            <i class="fa-solid fa-database me-1"></i> 4. SQL Database Design
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body p-4">
+                <div class="tab-content" id="archTabContent">
+                    <!-- Tab 1: Multi-Tenancy -->
+                    <div class="tab-pane fade show active" id="tenancy" role="tabpanel">
+                        <h4 class="fw-bold text-dark mb-3">Enterprise Multi-Tenancy Design</h4>
+                        <p class="text-muted">
+                            ExamNexus uses a shared-database, isolated-schema multi-tenant model. Every tenant has an identifier (e.g., <code>acme-corp</code> or <code>apex-university</code>), and every entity inherits from <code>BaseTenantEntity</code> implementing <code>ITenantEntity</code>.
+                        </p>
+
+                        <div class="row g-3 my-3">
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded-3 h-100">
+                                    <div class="fw-bold text-primary mb-1"><i class="fa-solid fa-fingerprint me-1"></i> 1. Tenant Resolution</div>
+                                    <p class="small text-muted mb-0">
+                                        <code>TenantResolutionMiddleware</code> inspects the request in 4 fallback stages:
+                                        <br/>&bull; Auth Claims (<code>TenantId</code>)
+                                        <br/>&bull; Header: <code>X-Tenant-Id</code>
+                                        <br/>&bull; Cookie: <code>.ExamNexus.Tenant</code>
+                                        <br/>&bull; Query: <code>?tenant=...</code>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded-3 h-100">
+                                    <div class="fw-bold text-success mb-1"><i class="fa-solid fa-filter me-1"></i> 2. Global Query Filters</div>
+                                    <p class="small text-muted mb-0">
+                                        EF Core <code>ApplicationDbContext</code> dynamically applies expression filters:
+                                        <code>e =&gt; e.TenantId == CurrentTenantId</code> to all tenant entities. Cross-tenant leakage is impossible at runtime.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded-3 h-100">
+                                    <div class="fw-bold text-warning mb-1"><i class="fa-solid fa-stamp me-1"></i> 3. ChangeTracker Injection</div>
+                                    <p class="small text-muted mb-0">
+                                        On <code>SaveChangesAsync()</code>, the DbContext automatically sets <code>TenantId</code> on newly created entities and generates audit logs with timestamps.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card bg-dark text-white p-3 rounded-3 mt-3">
+                            <div class="text-white-50 small mb-1">EF Core Global Query Filter Snippet:</div>
+                            <pre class="text-light mb-0 font-monospace small"><code>// In ApplicationDbContext.OnModelCreating:
+builder.Entity&lt;Course&gt;().HasQueryFilter(e =&gt; _tenantService.CurrentTenantId == null || e.TenantId == _tenantService.CurrentTenantId);
+builder.Entity&lt;Exam&gt;().HasQueryFilter(e =&gt; _tenantService.CurrentTenantId == null || e.TenantId == _tenantService.CurrentTenantId);
+builder.Entity&lt;CandidateExamSession&gt;().HasQueryFilter(e =&gt; _tenantService.CurrentTenantId == null || e.TenantId == _tenantService.CurrentTenantId);</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Proctoring -->
+                    <div class="tab-pane fade" id="proctor" role="tabpanel">
+                        <h4 class="fw-bold text-dark mb-3">Real-Time Anti-Cheat WebSocket Engine</h4>
+                        <p class="text-muted">
+                            Active exam sessions communicate over an encrypted SignalR WebSocket connection mapped at <code>/hubs/proctor</code>.
+                        </p>
+
+                        <div class="row g-3 my-3">
+                            <div class="col-md-6">
+                                <div class="p-3 border rounded-3">
+                                    <h6 class="fw-bold text-danger mb-2"><i class="fa-solid fa-eye-slash me-1"></i> Client-Side Anti-Cheat Hooks</h6>
+                                    <ul class="small text-muted mb-0 ps-3">
+                                        <li><code>document.visibilitychange</code>: Fires whenever a candidate switches tabs or minimizes the window.</li>
+                                        <li><code>window.blur</code>: Triggers when mouse focuses on a second monitor or devtools.</li>
+                                        <li>Continuous 15-second heartbeats ensure the candidate remains connected.</li>
+                                        <li>Exceeding max tab switches (default 3) sets <code>IsFlagged = true</code>.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 border rounded-3">
+                                    <h6 class="fw-bold text-primary mb-2"><i class="fa-solid fa-tower-broadcast me-1"></i> Proctor Command Dispatch</h6>
+                                    <ul class="small text-muted mb-0 ps-3">
+                                        <li>Proctor connects to tenant SignalR room: <code>proctor_tenant_{tenantId}</code>.</li>
+                                        <li>Live alerts toast instantly on the Proctor dashboard without refreshing the page.</li>
+                                        <li>Proctor can dispatch instantaneous warnings or terminate sessions remotely with 1 click.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 3: Grading -->
+                    <div class="tab-pane fade" id="grading" role="tabpanel">
+                        <h4 class="fw-bold text-dark mb-3">Live Answer Auto-Saving &amp; Instant Grading</h4>
+                        <p class="text-muted">
+                            As the candidate selects multiple-choice options or enters text, the interface dispatches background AJAX requests to <code>/Exam/SaveAnswer</code>.
+                        </p>
+                        <ul class="text-muted small">
+                            <li><strong>Resilient Autosave:</strong> If a network blip occurs, the answers are preserved in local browser session state and synced to database upon reconnection.</li>
+                            <li><strong>Automated Grading:</strong> Upon clicking "Submit", the system compares each candidate's selected option against <code>QuestionOptions.IsCorrect</code>, tallies awarded marks, calculates overall percentage, and checks against <code>PassingScorePercent</code>.</li>
+                            <li><strong>Proctor Audit Trail:</strong> Final scores and proctoring violation logs are recorded in <code>CandidateExamSessions</code> and <code>ProctorEvents</code> tables.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Tab 4: Database Design -->
+                    <div class="tab-pane fade" id="db" role="tabpanel">
+                        <h4 class="fw-bold text-dark mb-3">SQL Server Database Architecture</h4>
+                        <p class="text-muted">
+                            The complete database script resides at <code>D:\Anubhaw\Projects\DB\ExamNexus SaaS DB.sql</code> under dedicated schema <code>ExamSaaS</code>.
+                        </p>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm small">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Table Name</th>
+                                        <th>Primary Key</th>
+                                        <th>Tenant Isolated</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>ExamSaaS.Tenants</code></td><td>Guid Id</td><td>No (Root Catalog)</td><td>Organization tenants, subscription plan, max candidates</td></tr>
+                                    <tr><td><code>ExamSaaS.Courses</code></td><td>Guid Id</td><td>Yes (TenantId)</td><td>Course curriculum container</td></tr>
+                                    <tr><td><code>ExamSaaS.QuestionBanks</code></td><td>Guid Id</td><td>Yes (TenantId)</td><td>Curated question repositories</td></tr>
+                                    <tr><td><code>ExamSaaS.Questions</code></td><td>Guid Id</td><td>Yes (TenantId)</td><td>MCQs, points, difficulty level</td></tr>
+                                    <tr><td><code>ExamSaaS.QuestionOptions</code></td><td>Guid Id</td><td>No (Child of Question)</td><td>Options with IsCorrect boolean</td></tr>
+                                    <tr><td><code>ExamSaaS.Exams</code></td><td>Guid Id</td><td>Yes (TenantId)</td><td>Assessments with duration, passing score, access code</td></tr>
+                                    <tr><td><code>ExamSaaS.ExamQuestions</code></td><td>Composite</td><td>Yes (TenantId)</td><td>Join table mapping questions to exams with order</td></tr>
+                                    <tr><td><code>ExamSaaS.CandidateExamSessions</code></td><td>Guid Id</td><td>Yes (TenantId)</td><td>Active/completed session with score, tab switch count</td></tr>
+                                    <tr><td><code>ExamSaaS.CandidateAnswers</code></td><td>Guid Id</td><td>Yes (TenantId)</td><td>Candidate's selected option &amp; awarded points</td></tr>
+                                    <tr><td><code>ExamSaaS.ProctorEvents</code></td><td>Guid Id</td><td>Yes (TenantId)</td><td>Anti-cheat telemetry events &amp; severities</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

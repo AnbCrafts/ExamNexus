@@ -1,0 +1,31 @@
+## Ignore Visual Studio & .NET temporary build artifacts
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa]rms/
+[Aa]rm64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# SQLite databases & temp files
+*.db
+*.db-shm
+*.db-wal
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini

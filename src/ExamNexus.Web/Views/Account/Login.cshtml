@@ -1,0 +1,227 @@
+@model LoginRequestDto
+@{
+    ViewData["Title"] = "Tenant Authentication";
+    Layout = null; // Clean modern isolated login page
+    var tenants = ViewBag.Tenants as List<Tenant> ?? new List<Tenant>();
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ExamNexus SaaS</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .login-card {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+            width: 100%;
+            max-width: 480px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, #312e81 0%, #4338ca 100%);
+            padding: 32px 32px 28px;
+            color: #ffffff;
+            text-align: center;
+        }
+
+        .login-body {
+            padding: 32px;
+        }
+
+        .form-floating label {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn-authenticate {
+            background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+            border: none;
+            color: #ffffff;
+            font-weight: 700;
+            padding: 12px;
+            border-radius: 10px;
+            width: 100%;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-authenticate:hover {
+            background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 16px rgba(79, 70, 229, 0.35);
+        }
+
+        .quick-role-btn {
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: #334155;
+            transition: all 0.15s ease;
+            cursor: pointer;
+        }
+
+        .quick-role-btn:hover {
+            background: #eef2ff;
+            border-color: #c7d2fe;
+            color: #4338ca;
+            transform: translateY(-1px);
+        }
+
+        .tenant-selector {
+            background-color: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            font-weight: 600;
+            color: #1e293b;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="login-header">
+            <div class="d-inline-flex align-items-center justify-content-center bg-white bg-opacity-10 rounded-circle mb-3" style="width: 58px; height: 58px;">
+                <i class="fa-solid fa-graduation-cap text-warning fs-3"></i>
+            </div>
+            <h3 class="fw-bold mb-1 tracking-tight">ExamNexus</h3>
+            <p class="text-white-50 mb-0 small">Multi-Tenant Proctored Assessment SaaS</p>
+        </div>
+
+        <div class="login-body">
+            @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty]?.Errors.Count > 0)
+            {
+                <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3 border-0 shadow-sm">
+                    <i class="fa-solid fa-circle-exclamation me-1"></i>
+                    @foreach (var error in ViewData.ModelState[string.Empty]!.Errors)
+                    {
+                        <div>@error.ErrorMessage</div>
+                    }
+                </div>
+            }
+
+            <form asp-action="Login" method="post" id="loginForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="ReturnUrl" />
+
+                <!-- Tenant Selection -->
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-secondary mb-1">
+                        <i class="fa-solid fa-building me-1 text-primary"></i> Tenant Organization
+                    </label>
+                    <select asp-for="TenantIdentifier" class="form-select form-select-lg tenant-selector" id="tenantSelect">
+                        @if (tenants.Any())
+                        {
+                            @foreach (var t in tenants)
+                            {
+                                <option value="@t.Identifier">@t.Name (@t.Identifier)</option>
+                            }
+                        }
+                        else
+                        {
+                            <option value="acme-corp">Acme Corporation (acme-corp)</option>
+                            <option value="apex-university">Apex University (apex-university)</option>
+                        }
+                    </select>
+                    <span asp-validation-for="TenantIdentifier" class="text-danger small"></span>
+                </div>
+
+                <!-- Username or Email -->
+                <div class="form-floating mb-3">
+                    <input asp-for="UsernameOrEmail" class="form-control" id="userInput" placeholder="name@organization.com" required autofocus />
+                    <label for="userInput"><i class="fa-regular fa-envelope me-1"></i> Email or Username</label>
+                    <span asp-validation-for="UsernameOrEmail" class="text-danger small"></span>
+                </div>
+
+                <!-- Password -->
+                <div class="form-floating mb-3">
+                    <input asp-for="Password" type="password" class="form-control" id="passwordInput" placeholder="Password" required />
+                    <label for="passwordInput"><i class="fa-solid fa-lock me-1"></i> Password</label>
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+
+                <!-- Remember Me -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="form-check">
+                        <input asp-for="RememberMe" class="form-check-input" id="rememberMeCheck" />
+                        <label class="form-check-label small text-secondary" for="rememberMeCheck">Keep session active</label>
+                    </div>
+                    <span class="badge bg-light text-secondary border small">
+                        <i class="fa-solid fa-shield-halved text-success me-1"></i> Dual-Auth
+                    </span>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-authenticate mb-3">
+                    <i class="fa-solid fa-right-to-bracket me-2"></i> Launch Assessment Workspace
+                </button>
+            </form>
+
+            <!-- 1-Click Role Login Shortcuts -->
+            <div class="mt-4 pt-3 border-top">
+                <div class="text-center text-muted small fw-semibold mb-2">
+                    <i class="fa-solid fa-bolt text-warning me-1"></i> 1-Click Test Credentials
+                </div>
+                
+                <div class="text-muted fw-bold mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">ACME CORPORATION TENANT</div>
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                    <button type="button" class="quick-role-btn flex-fill text-danger" onclick="fillCreds('acme-corp', 'admin@acme.com', 'P@ssword123!')">
+                        <i class="fa-solid fa-shield-halved me-1"></i> Admin
+                    </button>
+                    <button type="button" class="quick-role-btn flex-fill text-primary" onclick="fillCreds('acme-corp', 'instructor@acme.com', 'P@ssword123!')">
+                        <i class="fa-solid fa-chalkboard-user me-1"></i> Instructor
+                    </button>
+                    <button type="button" class="quick-role-btn flex-fill text-warning" onclick="fillCreds('acme-corp', 'proctor@acme.com', 'P@ssword123!')">
+                        <i class="fa-solid fa-video me-1"></i> Proctor
+                    </button>
+                    <button type="button" class="quick-role-btn flex-fill text-success" onclick="fillCreds('acme-corp', 'student@acme.com', 'P@ssword123!')">
+                        <i class="fa-solid fa-user-graduate me-1"></i> Candidate
+                    </button>
+                </div>
+
+                <div class="text-muted fw-bold mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">APEX UNIVERSITY (ISOLATED TENANT)</div>
+                <div class="d-flex flex-wrap gap-1">
+                    <button type="button" class="quick-role-btn flex-fill text-dark" onclick="fillCreds('apex-university', 'admin@apex.edu', 'P@ssword123!')">
+                        <i class="fa-solid fa-building-columns me-1"></i> Apex Admin
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function fillCreds(tenant, email, pass) {
+            document.getElementById('tenantSelect').value = tenant;
+            document.getElementById('userInput').value = email;
+            document.getElementById('passwordInput').value = pass;
+            document.getElementById('loginForm').submit();
+        }
+    </script>
+</body>
+</html>

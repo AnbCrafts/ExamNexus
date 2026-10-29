@@ -1,0 +1,12 @@
+D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Domain\bin\Debug\net9.0\ExamNexus.Domain.deps.json
+D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Domain\bin\Debug\net9.0\ExamNexus.Domain.dll
+D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Domain\bin\Debug\net9.0\ExamNexus.Domain.pdb
+D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Domain\obj\Debug\net9.0\ExamNexus.Domain.csproj.AssemblyReference.cache
+D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Domain\obj\Debug\net9.0\ExamNexus.Domain.GeneratedMSBuildEditorConfig.editorconfig
+D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Domain\obj\Debug\net9.0\ExamNexus.Domain.AssemblyInfoInputs.cache
+D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Domain\obj\Debug\net9.0\ExamNexus.Domain.AssemblyInfo.cs
+D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Domain\obj\Debug\net9.0\ExamNexus.Domain.csproj.CoreCompileInputs.cache
+D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Domain\obj\Debug\net9.0\ExamNexus.Domain.dll
+D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Domain\obj\Debug\net9.0\refint\ExamNexus.Domain.dll
+D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Domain\obj\Debug\net9.0\ExamNexus.Domain.pdb
+D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Domain\obj\Debug\net9.0\ref\ExamNexus.Domain.dll

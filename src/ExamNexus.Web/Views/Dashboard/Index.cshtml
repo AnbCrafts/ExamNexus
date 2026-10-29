@@ -1,0 +1,348 @@
+@using System.Security.Claims
+@{
+    ViewData["Title"] = "Tenant Dashboard";
+    var tenantName = ViewBag.TenantName as string ?? "Acme Academy";
+    var tenantIdentifier = ViewBag.TenantIdentifier as string ?? "acme-corp";
+    var role = User.FindFirst(ClaimTypes.Role)?.Value ?? "Candidate";
+    var fullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "User";
+    var recentExams = ViewBag.RecentExams as List<Exam> ?? new List<Exam>();
+    var mySessions = ViewBag.MySessions as List<CandidateExamSession> ?? new List<CandidateExamSession>();
+}
+
+<!-- Welcome Header Banner -->
+<div class="card card-enterprise p-4 mb-4 border-0" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: #ffffff;">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge bg-indigo-500 bg-opacity-25 text-indigo-200 border border-indigo-400 border-opacity-30 px-2.5 py-1">
+                    <i class="fa-solid fa-building me-1"></i> @tenantName (<code>@tenantIdentifier</code>)
+                </span>
+                <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-30 px-2.5 py-1">
+                    <i class="fa-solid fa-user-shield me-1"></i> @role
+                </span>
+            </div>
+            <h2 class="fw-bold mb-1 text-white">Welcome back, @fullName!</h2>
+            <p class="text-white-50 mb-0">
+                Welcome to your isolated organization assessment portal. All questions, exam sessions, and proctoring telemetry are secured under strict tenant partition.
+            </p>
+        </div>
+        <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+            <div class="d-flex justify-content-lg-end gap-2">
+                <a asp-controller="Exam" asp-action="Index" class="btn btn-light fw-bold px-3 py-2 text-primary shadow-sm">
+                    <i class="fa-solid fa-file-pen me-1"></i> Take Assessment
+                </a>
+                @if (role != "Candidate")
+                {
+                    <a asp-controller="Proctor" asp-action="Index" class="btn btn-warning fw-bold px-3 py-2 shadow-sm text-dark">
+                        <i class="fa-solid fa-shield-halved me-1"></i> Proctor Console
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Counter Metrics -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4 col-xl-2">
+        <div class="card card-enterprise p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="text-muted small fw-semibold">COURSES</div>
+                    <div class="fs-3 fw-bold text-dark mt-1">@ViewBag.TotalCourses</div>
+                </div>
+                <div class="rounded-3 p-2 bg-primary bg-opacity-10 text-primary">
+                    <i class="fa-solid fa-book-bookmark fs-5"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-xl-2">
+        <div class="card card-enterprise p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="text-muted small fw-semibold">TOTAL EXAMS</div>
+                    <div class="fs-3 fw-bold text-dark mt-1">@ViewBag.TotalExams</div>
+                </div>
+                <div class="rounded-3 p-2 bg-info bg-opacity-10 text-info">
+                    <i class="fa-solid fa-clipboard-list fs-5"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-xl-2">
+        <div class="card card-enterprise p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="text-muted small fw-semibold">QUESTION BANK</div>
+                    <div class="fs-3 fw-bold text-dark mt-1">@ViewBag.TotalQuestions</div>
+                </div>
+                <div class="rounded-3 p-2 bg-secondary bg-opacity-10 text-secondary">
+                    <i class="fa-solid fa-database fs-5"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-xl-2">
+        <div class="card card-enterprise p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="text-muted small fw-semibold">LIVE SESSIONS</div>
+                    <div class="fs-3 fw-bold text-success mt-1">
+                        @ViewBag.ActiveLiveSessions
+                        <span class="signalr-live-indicator ms-1"></span>
+                    </div>
+                </div>
+                <div class="rounded-3 p-2 bg-success bg-opacity-10 text-success">
+                    <i class="fa-solid fa-tower-broadcast fs-5"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-xl-2">
+        <div class="card card-enterprise p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="text-muted small fw-semibold">COMPLETED</div>
+                    <div class="fs-3 fw-bold text-dark mt-1">@ViewBag.CompletedSessions</div>
+                </div>
+                <div class="rounded-3 p-2 bg-indigo bg-opacity-10 text-indigo-600">
+                    <i class="fa-solid fa-circle-check fs-5"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-xl-2">
+        <div class="card card-enterprise p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="text-muted small fw-semibold">SECURITY FLAGS</div>
+                    <div class="fs-3 fw-bold text-danger mt-1">@ViewBag.FlaggedSessions</div>
+                </div>
+                <div class="rounded-3 p-2 bg-danger bg-opacity-10 text-danger">
+                    <i class="fa-solid fa-triangle-exclamation fs-5"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Exams / Candidate Sessions -->
+    <div class="col-lg-8">
+        @if (role == "Candidate")
+        {
+            <div class="card card-enterprise mb-4">
+                <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="fa-solid fa-user-graduate me-2 text-primary"></i> My Assessment History
+                    </h5>
+                    <a asp-controller="Exam" asp-action="Index" class="btn btn-sm btn-outline-primary">
+                        Browse All Exams
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    @if (mySessions.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead class="table-light small text-muted">
+                                    <tr>
+                                        <th class="ps-4">ASSESSMENT</th>
+                                        <th>STATUS</th>
+                                        <th>SCORE</th>
+                                        <th>RESULT</th>
+                                        <th class="text-end pe-4">ACTION</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var s in mySessions)
+                                    {
+                                        <tr>
+                                            <td class="ps-4">
+                                                <div class="fw-bold text-dark">@(s.Exam?.Title ?? "Assessment")</div>
+                                                <div class="text-muted small">Started: @s.StartTimeUtc?.ToString("MMM dd, yyyy HH:mm") UTC</div>
+                                            </td>
+                                            <td>
+                                                @if (s.Status == ExamSessionStatus.InProgress)
+                                                {
+                                                    <span class="badge bg-warning text-dark"><i class="fa-solid fa-spinner fa-spin me-1"></i> In Progress</span>
+                                                }
+                                                else if (s.Status == ExamSessionStatus.Submitted)
+                                                {
+                                                    <span class="badge bg-success">Submitted</span>
+                                                }
+                                                else if (s.Status == ExamSessionStatus.FlaggedCheating)
+                                                {
+                                                    <span class="badge bg-danger">Disqualified</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">@s.Status</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (s.FinalScore.HasValue)
+                                                {
+                                                    <div class="fw-bold">@s.FinalScore / @(s.Exam?.TotalMarks ?? 100)</div>
+                                                    <div class="text-muted small">@s.Percentage%</div>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">&mdash;</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (s.HasPassed == true)
+                                                {
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle fw-bold">PASSED</span>
+                                                }
+                                                else if (s.HasPassed == false)
+                                                {
+                                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold">FAILED</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Pending</span>
+                                                }
+                                            </td>
+                                            <td class="text-end pe-4">
+                                                @if (s.Status == ExamSessionStatus.InProgress)
+                                                {
+                                                    <a asp-controller="Exam" asp-action="Take" asp-route-sessionId="@s.Id" class="btn btn-sm btn-brand-primary">
+                                                        Resume <i class="fa-solid fa-arrow-right ms-1"></i>
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <a asp-controller="Exam" asp-action="Result" asp-route-sessionId="@s.Id" class="btn btn-sm btn-outline-secondary">
+                                                        View Result
+                                                    </a>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-folder-open fs-2 mb-2"></i>
+                            <div>No assessments taken yet in this organization.</div>
+                            <a asp-controller="Exam" asp-action="Index" class="btn btn-sm btn-brand-primary mt-3">
+                                Start Your First Assessment
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Active Tenant Exam Catalog -->
+        <div class="card card-enterprise">
+            <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-dark">
+                    <i class="fa-solid fa-list-check me-2 text-primary"></i> Available Assessments
+                </h5>
+                <span class="badge bg-light text-dark border">Tenant: @tenantIdentifier</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    @if (recentExams.Any())
+                    {
+                        @foreach (var ex in recentExams)
+                        {
+                            <div class="list-group-item p-3 p-md-4">
+                                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="badge bg-primary-subtle text-primary fw-bold">@(ex.Course?.Code ?? "COURSE")</span>
+                                            <span class="text-muted small">&bull; @ex.DurationMinutes mins</span>
+                                            <span class="text-muted small">&bull; Pass: @ex.PassingScorePercent%</span>
+                                        </div>
+                                        <h5 class="fw-bold text-dark mb-1">@ex.Title</h5>
+                                        <div class="text-muted small">@(ex.Course?.Title ?? "Certification Assessment")</div>
+                                    </div>
+                                    <div class="text-md-end">
+                                        <a asp-controller="Exam" asp-action="Index" class="btn btn-sm btn-brand-primary px-3">
+                                            Enter Lobby <i class="fa-solid fa-arrow-right ms-1"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <div>No active exams configured for this tenant.</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Architecture & Proctoring Controls -->
+    <div class="col-lg-4">
+        <!-- Live Proctoring Status Card -->
+        <div class="card card-enterprise mb-4">
+            <div class="card-header bg-white py-3 px-4">
+                <h6 class="fw-bold mb-0 text-dark">
+                    <i class="fa-solid fa-shield-halved me-2 text-warning"></i> Real-Time Anti-Cheat Engine
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-3">
+                    Active candidates are monitored via continuous SignalR WebSockets. The system intercepts:
+                </p>
+                <ul class="list-unstyled small mb-3">
+                    <li class="mb-2 d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-check text-success"></i>
+                        <span>Browser tab-switching &amp; window blur events</span>
+                    </li>
+                    <li class="mb-2 d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-check text-success"></i>
+                        <span>Real-time countdown timer synchronization</span>
+                    </li>
+                    <li class="mb-2 d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-check text-success"></i>
+                        <span>Immediate answer autosave via AJAX</span>
+                    </li>
+                    <li class="mb-2 d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-check text-success"></i>
+                        <span>Automated evaluation upon submission</span>
+                    </li>
+                </ul>
+                @if (role != "Candidate")
+                {
+                    <a asp-controller="Proctor" asp-action="Index" class="btn btn-warning w-100 fw-bold">
+                        <i class="fa-solid fa-tv me-1"></i> Open Live Proctor Console
+                    </a>
+                }
+            </div>
+        </div>
+
+        <!-- Multi-Tenancy Architecture Badge Card -->
+        <div class="card card-enterprise">
+            <div class="card-header bg-white py-3 px-4">
+                <h6 class="fw-bold mb-0 text-dark">
+                    <i class="fa-solid fa-layer-group me-2 text-info"></i> Multi-Tenant SaaS Isolation
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="p-3 bg-light rounded-3 small mb-3">
+                    <div class="fw-bold text-dark mb-1">EF Core Global Query Filters</div>
+                    <div class="text-muted">
+                        All queries to <code>Courses</code>, <code>Exams</code>, <code>Questions</code>, and <code>CandidateAnswers</code> automatically append <code>WHERE TenantId = @@CurrentTenantId</code> at the database engine level.
+                    </div>
+                </div>
+                <a asp-controller="Dashboard" asp-action="Architecture" class="btn btn-outline-info w-100 fw-semibold">
+                    <i class="fa-solid fa-diagram-project me-1"></i> Read Architecture Specs
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
