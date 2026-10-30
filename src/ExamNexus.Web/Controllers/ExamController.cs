@@ -295,7 +295,7 @@ public class ExamController : Controller
             session.FlagReason = $"Exceeded allowable tab switches ({session.TabSwitchCount}). Flagged for review.";
         }
 
-        session.ProctorEvents.Add(new ProctorEvent
+        _context.ProctorEvents.Add(new ProctorEvent
         {
             Id = Guid.NewGuid(),
             TenantId = session.TenantId,

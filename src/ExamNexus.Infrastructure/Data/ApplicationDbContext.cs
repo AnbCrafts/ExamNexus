@@ -132,9 +132,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
             b.Property(s => s.Percentage).HasPrecision(5, 2);
             b.Property(s => s.FlagReason).HasMaxLength(250);
 
-            // Optimistic Concurrency Token
-            b.Property(s => s.RowVersion).IsRowVersion();
-
             b.HasOne(s => s.Candidate)
              .WithMany(u => u.ExamSessions)
              .HasForeignKey(s => s.CandidateId)
