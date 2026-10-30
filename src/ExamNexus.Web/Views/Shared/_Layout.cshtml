@@ -153,52 +153,43 @@
             background: rgba(253, 224, 71, 0.12) !important;
         }
 
-        /* User Menu Dropdown Button */
-        .user-menu-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 4px 10px;
-            color: #ffffff;
-            cursor: pointer;
-            transition: all 0.15s ease;
-        }
-
-        .user-menu-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .user-avatar-circle {
-            width: 32px;
-            height: 32px;
+        /* User Profile Avatar Button (Initials Only) */
+        .user-avatar-circle-btn {
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             color: #ffffff;
             font-weight: 700;
             font-size: 0.85rem;
-            display: flex;
+            letter-spacing: 0.5px;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
+            border: 2px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            outline: none;
+            flex-shrink: 0;
         }
 
-        .user-name {
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: #f8fafc;
-            line-height: 1.15;
+        .user-avatar-circle-btn:hover, .user-avatar-circle-btn:focus {
+            transform: scale(1.08);
+            border-color: #ffffff;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.6);
         }
 
-        .user-sub {
-            font-size: 0.7rem;
-            color: #94a3b8;
-            line-height: 1;
-        }
-
-        .user-caret {
-            font-size: 0.65rem;
-            color: #94a3b8;
+        /* Shift Dropdown Box to the Left so it never gets clipped */
+        .user-profile-dropdown {
+            right: 14px !important;
+            left: auto !important;
+            margin-top: 10px !important;
+            min-width: 240px;
+            border-radius: 12px;
+            background-color: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            box-shadow: 0 12px 35px -4px rgba(0, 0, 0, 0.5);
         }
 
         /* Responsive Mobile Drawer */
@@ -394,6 +385,11 @@
                             var tenantName = User.FindFirst("TenantName")?.Value ?? (isSysAdmin ? "Platform Operations" : "Acme Academy");
                             var tenantId = User.FindFirst("TenantIdentifier")?.Value ?? (isSysAdmin ? "global" : "acme-corp");
 
+                            var nameParts = (fullName ?? "User").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                            var initials = nameParts.Length > 1 
+                                ? $"{nameParts[0][0]}{nameParts[^1][0]}".ToUpper() 
+                                : nameParts.Length == 1 ? nameParts[0][0].ToString().ToUpper() : "U";
+
                             <!-- Mobile-only Tenant Display -->
                             <div class="d-flex d-md-none align-items-center gap-2 px-2 py-1.5 mb-2 bg-dark bg-opacity-50 rounded text-white-50 small w-100">
                                 <i class="fa-solid @(isSysAdmin ? "fa-crown text-warning" : "fa-building text-info")"></i>
@@ -401,18 +397,11 @@
                                 <code class="ms-auto">(@tenantId)</code>
                             </div>
 
-                            <div class="dropdown w-100 w-xl-auto">
-                                <button class="user-menu-btn d-flex align-items-center gap-2 w-100" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <div class="user-avatar-circle">
-                                        @(fullName?.Substring(0, 1).ToUpper() ?? "U")
-                                    </div>
-                                    <div class="text-start d-none d-sm-block text-truncate" style="max-width: 140px;">
-                                        <div class="user-name text-truncate">@fullName</div>
-                                        <div class="user-sub text-truncate">@role</div>
-                                    </div>
-                                    <i class="fa-solid fa-chevron-down ms-1 user-caret"></i>
+                            <div class="dropdown me-2 me-lg-3">
+                                <button class="user-avatar-circle-btn" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="@fullName (@role)">
+                                    @initials
                                 </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 py-2 mt-2 dropdown-menu-dark" aria-labelledby="userMenuDropdown" style="min-width: 240px; border-radius: 12px; background-color: #1e293b; border: 1px solid rgba(255,255,255,0.1) !important;">
+                                <ul class="dropdown-menu dropdown-menu-end user-profile-dropdown shadow-lg border-0 py-2 dropdown-menu-dark" aria-labelledby="userMenuDropdown">
                                     <li class="px-3 py-2 border-bottom border-secondary border-opacity-25">
                                         <div class="fw-bold text-white text-truncate">@fullName</div>
                                         <div class="text-white-50 small text-truncate">@User.FindFirst(ClaimTypes.Email)?.Value</div>
