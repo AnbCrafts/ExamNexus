@@ -63,7 +63,44 @@ public class AccountController : Controller
             return View(model);
         }
 
-        // 1. Resolve Tenant
+        // 1. Check if user is a Global SuperAdmin (TenantId == null, Role: SystemAdmin)
+        var inputIdentifier = (model.UsernameOrEmail ?? string.Empty).Trim();
+        var user = await _userManager.FindByEmailAsync(inputIdentifier)
+                   ?? await _userManager.FindByNameAsync(inputIdentifier);
+
+        if (user != null && !user.TenantId.HasValue && user.IsActive)
+        {
+            var isSysAdmin = await _userManager.IsInRoleAsync(user, "SystemAdmin");
+            if (isSysAdmin)
+            {
+                var sysResult = await _signInManager.CheckPasswordSignInAsync(user, model.Password, lockoutOnFailure: true);
+                if (sysResult.Succeeded)
+                {
+                    await _userManager.ResetAccessFailedCountAsync(user);
+                    var sysClaims = new List<Claim>
+                    {
+                        new("FullName", user.FullName),
+                        new("UserCode", user.UserCode),
+                        new("IsSystemAdmin", "true")
+                    };
+                    await _signInManager.SignInWithClaimsAsync(user, model.RememberMe, sysClaims);
+                    _logger.LogInformation("Global SuperAdmin {Email} logged into ExamNexus Platform", user.Email);
+                    return RedirectToAction("Index", "Admin");
+                }
+                else if (sysResult.IsLockedOut)
+                {
+                    ModelState.AddModelError(string.Empty, "SuperAdmin account locked due to consecutive failed attempts. Retry in 15 minutes.");
+                    return View(model);
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, "Invalid SuperAdmin credentials.");
+                    return View(model);
+                }
+            }
+        }
+
+        // 2. Resolve Tenant for Organization Users
         var tenantSlug = (model.TenantIdentifier ?? string.Empty).Trim().ToLowerInvariant();
         var tenant = await _dbContext.Tenants
             .FirstOrDefaultAsync(t => t.Identifier.ToLower() == tenantSlug && t.IsActive);
@@ -74,11 +111,7 @@ public class AccountController : Controller
             return View(model);
         }
 
-        // 2. Resolve User within Tenant (supports case-insensitive email or username)
-        var inputIdentifier = (model.UsernameOrEmail ?? string.Empty).Trim();
-        var user = await _userManager.FindByEmailAsync(inputIdentifier)
-                   ?? await _userManager.FindByNameAsync(inputIdentifier);
-
+        // 3. Resolve User within Tenant
         if (user == null || !user.IsActive || (user.TenantId.HasValue && user.TenantId.Value != tenant.Id))
         {
             ModelState.AddModelError(string.Empty, "Invalid credentials or account does not belong to this organization.");

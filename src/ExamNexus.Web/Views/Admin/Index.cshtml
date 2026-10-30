@@ -1,0 +1,469 @@
+@model ExamNexus.Application.DTOs.PlatformAdminDashboardViewModel
+@using ExamNexus.Domain.Entities
+@using ExamNexus.Domain.Enums
+@{
+    ViewData["Title"] = "Platform SuperAdmin Console";
+}
+
+<div class="container-fluid px-4 py-4">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-dark text-warning px-3 py-2 fs-6 rounded-pill border shadow-sm">
+                    <i class="fa-solid fa-crown me-1"></i> Global SuperAdmin
+                </span>
+                <h2 class="h3 fw-bold mb-0 text-dark">Platform Command Center</h2>
+            </div>
+            <p class="text-muted small mb-0 mt-1">Manage global multi-tenant organizations, subscription plans, candidate quotas, and prospective tenant purchase requests.</p>
+        </div>
+        <div class="d-flex gap-2 mt-3 mt-md-0">
+            <button type="button" class="btn btn-primary fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#createTenantModal">
+                <i class="fa-solid fa-plus me-1"></i> Provision New Tenant
+            </button>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary fw-semibold">
+                <i class="fa-solid fa-earth-americas me-1"></i> Public Landing
+            </a>
+        </div>
+    </div>
+
+    <!-- Feedback Alerts -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="fa-solid fa-circle-check me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="fa-solid fa-circle-exclamation me-2"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["WarningMessage"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i> @TempData["WarningMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- KPI Metrics -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-semibold text-uppercase">Total Tenants</div>
+                        <div class="fs-3 fw-bold text-dark mt-1">@Model.TotalTenants</div>
+                        <span class="badge bg-success-subtle text-success small">@Model.ActiveTenants Active</span>
+                    </div>
+                    <div class="rounded-3 bg-primary bg-opacity-10 p-3 text-primary">
+                        <i class="fa-solid fa-building fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-semibold text-uppercase">Pending Inquiries</div>
+                        <div class="fs-3 fw-bold text-dark mt-1">@Model.PendingRequestsCount</div>
+                        <span class="badge bg-warning-subtle text-warning small">Awaiting Review</span>
+                    </div>
+                    <div class="rounded-3 bg-warning bg-opacity-10 p-3 text-warning">
+                        <i class="fa-solid fa-envelope-open-text fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-semibold text-uppercase">Total Platform Exams</div>
+                        <div class="fs-3 fw-bold text-dark mt-1">@Model.TotalPlatformExams</div>
+                        <span class="badge bg-info-subtle text-info small">Across All Tenants</span>
+                    </div>
+                    <div class="rounded-3 bg-info bg-opacity-10 p-3 text-info">
+                        <i class="fa-solid fa-file-shield fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-semibold text-uppercase">Candidate Sessions</div>
+                        <div class="fs-3 fw-bold text-dark mt-1">@Model.TotalPlatformSessions</div>
+                        <span class="badge bg-secondary-subtle text-secondary small">Proctored & Evaluated</span>
+                    </div>
+                    <div class="rounded-3 bg-success bg-opacity-10 p-3 text-success">
+                        <i class="fa-solid fa-user-graduate fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <ul class="nav nav-pills mb-4 gap-2" id="adminTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-semibold px-4 py-2" id="tenants-tab" data-bs-toggle="tab" data-bs-target="#tenants-pane" type="button" role="tab">
+                <i class="fa-solid fa-building me-2"></i> Active Organizations (@Model.Tenants.Count)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold px-4 py-2 position-relative" id="inquiries-tab" data-bs-toggle="tab" data-bs-target="#inquiries-pane" type="button" role="tab">
+                <i class="fa-solid fa-file-invoice-dollar me-2"></i> Plan Purchase Inquiries
+                @if (Model.PendingRequestsCount > 0)
+                {
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        @Model.PendingRequestsCount
+                    </span>
+                }
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tabs Content -->
+    <div class="tab-content" id="adminTabsContent">
+        <!-- 1. Tenants Pane -->
+        <div class="tab-pane fade show active" id="tenants-pane" role="tabpanel">
+            <div class="card border-0 shadow-sm rounded-3 bg-white overflow-hidden">
+                <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-dark">Tenant Organizations</h5>
+                    <span class="text-muted small">Multi-tenant schema isolated databases and access policies</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Organization</th>
+                                <th>Identifier (Slug)</th>
+                                <th>Subscription Plan</th>
+                                <th>Candidate Capacity</th>
+                                <th>Usage Metrics</th>
+                                <th>Status</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var tenant in Model.Tenants)
+                            {
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="rounded-circle" style="width: 14px; height: 14px; background-color: @tenant.BrandColorHex;"></div>
+                                            <span class="fw-bold text-dark">@tenant.Name</span>
+                                        </div>
+                                        <div class="text-muted small">Registered @tenant.CreatedAtUtc.ToString("MMM dd, yyyy")</div>
+                                    </td>
+                                    <td>
+                                        <code class="px-2 py-1 bg-light rounded text-primary fw-semibold">@tenant.Identifier</code>
+                                    </td>
+                                    <td>
+                                        @if (tenant.Plan == TenantPlan.Enterprise)
+                                        {
+                                            <span class="badge bg-purple-subtle text-purple px-2 py-1 fw-bold border" style="color: #6b21a8; background-color: #f3e8ff; border-color: #d8b4fe !important;">
+                                                <i class="fa-solid fa-crown me-1"></i> Enterprise (Unlimited)
+                                            </span>
+                                        }
+                                        else if (tenant.Plan == TenantPlan.Professional)
+                                        {
+                                            <span class="badge bg-primary-subtle text-primary px-2 py-1 fw-bold border">
+                                                <i class="fa-solid fa-award me-1"></i> Professional (5 Max)
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary-subtle text-secondary px-2 py-1 fw-bold border">
+                                                <i class="fa-solid fa-seedling me-1"></i> Free (2 Max)
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold">@tenant.MaxCandidateSlots.ToString("N0") <span class="text-muted fw-normal small">slots</span></div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-3 small">
+                                            <span><i class="fa-solid fa-users text-muted me-1"></i><strong>@tenant.TotalUsers</strong> users</span>
+                                            <span><i class="fa-solid fa-file-lines text-muted me-1"></i><strong>@tenant.TotalExams</strong> exams</span>
+                                            <span><i class="fa-solid fa-clock-rotate-left text-muted me-1"></i><strong>@tenant.TotalSessions</strong> sessions</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if (tenant.IsActive)
+                                        {
+                                            <span class="badge bg-success-subtle text-success px-2 py-1">Active</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger-subtle text-danger px-2 py-1">Suspended</span>
+                                        }
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <div class="btn-group btn-group-sm">
+                                            <!-- Upgrade/Edit Plan -->
+                                            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editPlanModal-@tenant.Id" title="Change Subscription Plan">
+                                                <i class="fa-solid fa-sliders"></i>
+                                            </button>
+                                            <!-- Toggle Status -->
+                                            <form asp-action="ToggleStatus" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="tenantId" value="@tenant.Id" />
+                                                <button type="submit" class="btn btn-outline-secondary" title="@(tenant.IsActive ? "Suspend Tenant" : "Reactivate Tenant")" onclick="return confirm('Are you sure you want to change the active status for this organization?')">
+                                                    <i class="fa-solid @(tenant.IsActive ? "fa-ban text-danger" : "fa-check text-success")"></i>
+                                                </button>
+                                            </form>
+                                            <!-- Delete Tenant -->
+                                            <form asp-action="DeleteTenant" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="tenantId" value="@tenant.Id" />
+                                                <button type="submit" class="btn btn-outline-secondary text-danger" title="Remove Tenant from Platform" onclick="return confirm('WARNING: Permanently delete tenant \'@tenant.Name\' and all its associated data? This action cannot be undone.')">
+                                                    <i class="fa-regular fa-trash-can"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+
+                                        <!-- Edit Plan Modal -->
+                                        <div class="modal fade" id="editPlanModal-@tenant.Id" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered text-start">
+                                                <div class="modal-content border-0 shadow">
+                                                    <form asp-action="UpdateSubscription" method="post">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="TenantId" value="@tenant.Id" />
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title fw-bold">Modify Subscription - @tenant.Name</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label class="form-label fw-semibold small">Subscription Plan Tier</label>
+                                                                <select name="Plan" class="form-select">
+                                                                    <option value="@((int)TenantPlan.Free)" selected="@(tenant.Plan == TenantPlan.Free)">Free Tier (Quota: 2 assessments)</option>
+                                                                    <option value="@((int)TenantPlan.Professional)" selected="@(tenant.Plan == TenantPlan.Professional)">Professional Tier (Quota: 5 assessments)</option>
+                                                                    <option value="@((int)TenantPlan.Enterprise)" selected="@(tenant.Plan == TenantPlan.Enterprise)">Enterprise Tier (Quota: Unlimited assessments)</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label fw-semibold small">Candidate Seat Capacity</label>
+                                                                <input type="number" name="MaxCandidateSlots" value="@tenant.MaxCandidateSlots" class="form-control" min="10" max="100000" required />
+                                                                <div class="form-text small">Maximum concurrent or enrolled student slots.</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-primary fw-semibold">Save Subscription Changes</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Subscription Inquiries Pane -->
+        <div class="tab-pane fade" id="inquiries-pane" role="tabpanel">
+            <div class="card border-0 shadow-sm rounded-3 bg-white overflow-hidden">
+                <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark">Prospective Plan Inquiries</h5>
+                        <p class="text-muted small mb-0">Review inbound requests submitted through the public landing page.</p>
+                    </div>
+                </div>
+                @if (!Model.SubscriptionRequests.Any())
+                {
+                    <div class="p-5 text-center text-muted">
+                        <i class="fa-regular fa-folder-open fs-2 mb-2 d-block"></i>
+                        No subscription inquiries submitted yet.
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">Organization & Contact</th>
+                                    <th>Requested Plan</th>
+                                    <th>Estimated Slots</th>
+                                    <th>Notes / Requirements</th>
+                                    <th>Submitted</th>
+                                    <th>Status</th>
+                                    <th class="text-end pe-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var req in Model.SubscriptionRequests)
+                                {
+                                    <tr>
+                                        <td class="ps-4">
+                                            <div class="fw-bold text-dark">@req.OrganizationName</div>
+                                            <div class="small text-muted">
+                                                <i class="fa-regular fa-user me-1"></i>@req.ContactName &bull;
+                                                <a href="mailto:@req.ContactEmail" class="text-decoration-none">@req.ContactEmail</a>
+                                                @if (!string.IsNullOrEmpty(req.ContactPhone))
+                                                {
+                                                    <span> &bull; @req.ContactPhone</span>
+                                                }
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary-subtle text-primary fw-bold">@req.RequestedPlan</span>
+                                        </td>
+                                        <td>
+                                            <strong>@req.EstimatedCandidates.ToString("N0")</strong> candidates
+                                        </td>
+                                        <td>
+                                            <div class="small text-muted text-truncate" style="max-width: 280px;" title="@req.AdditionalNotes">
+                                                @(string.IsNullOrEmpty(req.AdditionalNotes) ? "—" : req.AdditionalNotes)
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="small text-muted">@req.CreatedAtUtc.ToString("MMM dd, yyyy HH:mm")</span>
+                                        </td>
+                                        <td>
+                                            @if (req.Status == RequestStatus.Pending)
+                                            {
+                                                <span class="badge bg-warning text-dark px-2 py-1"><i class="fa-regular fa-clock me-1"></i>Pending</span>
+                                            }
+                                            else if (req.Status == RequestStatus.Approved)
+                                            {
+                                                <span class="badge bg-success px-2 py-1"><i class="fa-solid fa-check me-1"></i>Approved & Provisioned</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary px-2 py-1" title="@req.RejectionReason"><i class="fa-solid fa-xmark me-1"></i>Declined</span>
+                                            }
+                                        </td>
+                                        <td class="text-end pe-4">
+                                            @if (req.Status == RequestStatus.Pending)
+                                            {
+                                                <div class="d-flex justify-content-end gap-2">
+                                                    <!-- 1-Click Approve & Provision Form -->
+                                                    <form asp-action="ApproveRequest" method="post" class="d-inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="requestId" value="@req.Id" />
+                                                        <button type="submit" class="btn btn-sm btn-success fw-semibold shadow-sm" onclick="return confirm('Approve this request and immediately provision a new Tenant organization with an initial Administrator account?')">
+                                                            <i class="fa-solid fa-check me-1"></i> Approve & Provision
+                                                        </button>
+                                                    </form>
+
+                                                    <!-- Reject Form -->
+                                                    <form asp-action="RejectRequest" method="post" class="d-inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="requestId" value="@req.Id" />
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Decline this plan request?')">
+                                                            <i class="fa-solid fa-xmark"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">Processed</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Create New Tenant -->
+<div class="modal fade" id="createTenantModal" tabindex="-1" aria-labelledby="createTenantModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <form asp-action="CreateTenant" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold" id="createTenantModalLabel">
+                        <i class="fa-solid fa-building me-2 text-primary"></i> Provision New Tenant Organization
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-7">
+                            <label class="form-label fw-semibold small">Organization Name</label>
+                            <input type="text" name="Name" class="form-control" placeholder="e.g. Oxford Digital Academy" required />
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold small">Tenant Identifier (Slug)</label>
+                            <input type="text" name="Identifier" class="form-control" placeholder="oxford-digital" pattern="^[a-z0-9-]+$" required />
+                            <div class="form-text small">Unique URL slug (lowercase letters, numbers, hyphens).</div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold small">Subscription Tier</label>
+                            <select name="Plan" class="form-select">
+                                <option value="@((int)TenantPlan.Free)">Free (Limit 2 assessments)</option>
+                                <option value="@((int)TenantPlan.Professional)" selected>Professional (Limit 5 assessments)</option>
+                                <option value="@((int)TenantPlan.Enterprise)">Enterprise (Unlimited assessments)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Candidate Capacity Slots</label>
+                            <input type="number" name="MaxCandidateSlots" class="form-control" value="1000" min="10" max="100000" required />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold small">Brand Color</label>
+                            <input type="color" name="BrandColorHex" class="form-control form-control-color w-100" value="#4f46e5" title="Choose brand color" />
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-dark mt-4 mb-3 pt-2 border-top">
+                        <i class="fa-solid fa-user-shield me-2 text-primary"></i> Initial Organization Administrator
+                    </h6>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">First Name</label>
+                            <input type="text" name="AdminFirstName" class="form-control" placeholder="Jane" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Last Name</label>
+                            <input type="text" name="AdminLastName" class="form-control" placeholder="Doe" required />
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-7">
+                            <label class="form-label fw-semibold small">Admin Email Address</label>
+                            <input type="email" name="AdminEmail" class="form-control" placeholder="admin@organization.com" required />
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold small">Default Temporary Password</label>
+                            <input type="text" name="DefaultPassword" class="form-control font-monospace" value="P@ssword123!" required />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-semibold px-4">
+                        <i class="fa-solid fa-check me-1"></i> Provision Tenant
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

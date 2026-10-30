@@ -188,6 +188,13 @@
                 <div class="text-center text-muted small fw-semibold mb-2">
                     <i class="fa-solid fa-bolt text-warning me-1"></i> 1-Click Test Credentials
                 </div>
+
+                <div class="mb-2">
+                    <button type="button" class="btn btn-dark w-100 py-2 small fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" style="border-radius: 8px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);" onclick="fillSuperAdmin('superadmin@examnexus.com', 'P@ssword123!')">
+                        <i class="fa-solid fa-crown text-warning"></i>
+                        <span>Global SuperAdmin (Platform Operator)</span>
+                    </button>
+                </div>
                 
                 <div class="text-muted fw-bold mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">ACME CORPORATION TENANT</div>
                 <div class="d-flex flex-wrap gap-1 mb-2">
@@ -218,6 +225,12 @@
     <script>
         function fillCreds(tenant, email, pass) {
             document.getElementById('tenantSelect').value = tenant;
+            document.getElementById('userInput').value = email;
+            document.getElementById('passwordInput').value = pass;
+            document.getElementById('loginForm').submit();
+        }
+
+        function fillSuperAdmin(email, pass) {
             document.getElementById('userInput').value = email;
             document.getElementById('passwordInput').value = pass;
             document.getElementById('loginForm').submit();

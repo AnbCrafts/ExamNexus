@@ -150,7 +150,7 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark navbar-examnexus py-2.5">
             <div class="container-fluid px-lg-4">
-                <a class="navbar-brand" asp-controller="Dashboard" asp-action="Index">
+                <a class="navbar-brand" asp-controller="Home" asp-action="Index">
                     <i class="fa-solid fa-graduation-cap"></i>
                     <span>Exam<strong style="color: #818cf8;">Nexus</strong></span>
                     <span class="badge bg-indigo-900 border border-indigo-700 text-indigo-200 ms-1 fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">PROCTORED SAAS</span>
@@ -158,10 +158,11 @@
 
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    var tenantName = User.FindFirst("TenantName")?.Value ?? "Acme Academy";
-                    var tenantId = User.FindFirst("TenantIdentifier")?.Value ?? "acme-corp";
+                    var isSysAdmin = User.IsInRole("SystemAdmin") || User.FindFirst("IsSystemAdmin")?.Value == "true";
+                    var tenantName = User.FindFirst("TenantName")?.Value ?? (isSysAdmin ? "Platform Operations" : "Acme Academy");
+                    var tenantId = User.FindFirst("TenantIdentifier")?.Value ?? (isSysAdmin ? "global" : "acme-corp");
                     <div class="tenant-pill ms-lg-3 d-none d-md-inline-flex">
-                        <i class="fa-solid fa-building-columns"></i>
+                        <i class="fa-solid @(isSysAdmin ? "fa-crown text-warning" : "fa-building-columns")"></i>
                         <span>@tenantName</span>
                         <code class="text-white-50 ms-1" style="font-size: 0.75rem;">(@tenantId)</code>
                     </div>
@@ -173,8 +174,22 @@
 
                 <div class="collapse navbar-collapse" id="nexusNavbar">
                     <ul class="navbar-nav me-auto ms-lg-4 mb-2 mb-lg-0 gap-1">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">
+                                <i class="fa-solid fa-house me-1"></i> Home
+                            </a>
+                        </li>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
+                            @if (User.IsInRole("SystemAdmin") || User.FindFirst("IsSystemAdmin")?.Value == "true")
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-warning fw-bold" asp-controller="Admin" asp-action="Index">
+                                        <i class="fa-solid fa-crown me-1 text-warning"></i> SuperAdmin Console
+                                    </a>
+                                </li>
+                            }
+
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Dashboard" asp-action="Index">
                                     <i class="fa-solid fa-chart-pie me-1"></i> Dashboard
@@ -199,6 +214,19 @@
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Dashboard" asp-action="Architecture">
                                     <i class="fa-solid fa-layer-group me-1 text-info"></i> Architecture
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="/#plans">
+                                    <i class="fa-solid fa-layer-group me-1"></i> Subscription Plans
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Exam" asp-action="Join">
+                                    <i class="fa-solid fa-key me-1 text-info"></i> Candidate Join
                                 </a>
                             </li>
                         }

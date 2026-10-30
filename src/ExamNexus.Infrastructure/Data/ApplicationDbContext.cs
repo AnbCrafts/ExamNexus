@@ -35,6 +35,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<CandidateAnswer> CandidateAnswers => Set<CandidateAnswer>();
     public DbSet<ProctorEvent> ProctorEvents => Set<ProctorEvent>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<SubscriptionRequest> SubscriptionRequests => Set<SubscriptionRequest>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -151,6 +152,23 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
             b.HasKey(p => p.Id);
             b.Property(p => p.EventType).HasMaxLength(50).IsRequired();
             b.Property(p => p.Details).HasMaxLength(500);
+        });
+
+        builder.Entity<SubscriptionRequest>(b =>
+        {
+            b.ToTable("SubscriptionRequests");
+            b.HasKey(s => s.Id);
+            b.Property(s => s.OrganizationName).HasMaxLength(150).IsRequired();
+            b.Property(s => s.ContactName).HasMaxLength(100).IsRequired();
+            b.Property(s => s.ContactEmail).HasMaxLength(150).IsRequired();
+            b.Property(s => s.ContactPhone).HasMaxLength(30);
+            b.Property(s => s.SuggestedIdentifier).HasMaxLength(50);
+            b.Property(s => s.RejectionReason).HasMaxLength(500);
+
+            b.HasOne(s => s.CreatedTenant)
+             .WithMany()
+             .HasForeignKey(s => s.CreatedTenantId)
+             .OnDelete(DeleteBehavior.SetNull);
         });
 
         // ====================================================================

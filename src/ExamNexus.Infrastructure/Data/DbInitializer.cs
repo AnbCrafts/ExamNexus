@@ -16,6 +16,35 @@ public static class DbInitializer
     {
         await context.Database.EnsureCreatedAsync();
 
+        // Self-healing: ensure SubscriptionRequests table exists on existing SQLite databases
+        try
+        {
+            await context.Database.ExecuteSqlRawAsync(@"
+                CREATE TABLE IF NOT EXISTS SubscriptionRequests (
+                    Id TEXT NOT NULL PRIMARY KEY,
+                    OrganizationName TEXT NOT NULL,
+                    SuggestedIdentifier TEXT NULL,
+                    ContactName TEXT NOT NULL,
+                    ContactEmail TEXT NOT NULL,
+                    ContactPhone TEXT NULL,
+                    RequestedPlan INTEGER NOT NULL,
+                    EstimatedCandidates INTEGER NOT NULL,
+                    AdditionalNotes TEXT NULL,
+                    Status INTEGER NOT NULL,
+                    RejectionReason TEXT NULL,
+                    ProcessedAtUtc TEXT NULL,
+                    ProcessedByUserId TEXT NULL,
+                    CreatedTenantId TEXT NULL,
+                    CreatedAtUtc TEXT NOT NULL,
+                    UpdatedAtUtc TEXT NULL,
+                    IsDeleted INTEGER NOT NULL DEFAULT 0
+                );");
+        }
+        catch
+        {
+            // Ignore if schema already manages this or SQL dialect differs
+        }
+
         // 1. Seed Tenants
         var tenantAcmeId = Guid.Parse("11111111-2222-3333-4444-555555555555");
         var tenantApexId = Guid.Parse("22222222-3333-4444-5555-666666666666");
@@ -60,7 +89,18 @@ public static class DbInitializer
             }
         }
 
-        // 3. Seed / Ensure Users for Acme Corp
+        // 3. Seed / Ensure Global System SuperAdmin (TenantId = null)
+        await EnsureUserAsync(
+            userManager,
+            email: "superadmin@examnexus.com",
+            password: DefaultDemoPassword,
+            firstName: "Global",
+            lastName: "SuperAdmin",
+            userCode: "SYS-001",
+            tenantId: null,
+            roleName: "SystemAdmin");
+
+        // 4. Seed / Ensure Users for Acme Corp
         await EnsureUserAsync(
             userManager,
             email: "admin@acme.com",
@@ -236,6 +276,42 @@ public static class DbInitializer
             await context.Exams.AddAsync(exam);
             await context.SaveChangesAsync();
         }
+
+        // 7. Seed Sample Prospective Subscription Requests
+        if (!await context.SubscriptionRequests.AnyAsync())
+        {
+            context.SubscriptionRequests.AddRange(
+                new SubscriptionRequest
+                {
+                    Id = Guid.NewGuid(),
+                    OrganizationName = "Stanford Online Prep Institute",
+                    SuggestedIdentifier = "stanford-prep",
+                    ContactName = "Dr. Eleanor Vance",
+                    ContactEmail = "eleanor.vance@stanfordprep.edu",
+                    ContactPhone = "+1 650 555 0192",
+                    RequestedPlan = TenantPlan.Enterprise,
+                    EstimatedCandidates = 2500,
+                    AdditionalNotes = "Evaluating for spring semester finals with live SignalR tab-switch monitoring.",
+                    Status = RequestStatus.Pending,
+                    CreatedAtUtc = DateTime.UtcNow.AddHours(-18)
+                },
+                new SubscriptionRequest
+                {
+                    Id = Guid.NewGuid(),
+                    OrganizationName = "FinTech Global Academy",
+                    SuggestedIdentifier = "fintech-global",
+                    ContactName = "Liam Henderson",
+                    ContactEmail = "liam.h@fintech-academy.io",
+                    ContactPhone = "+44 20 7946 0912",
+                    RequestedPlan = TenantPlan.Professional,
+                    EstimatedCandidates = 450,
+                    AdditionalNotes = "Need immediate onboarding for compliance certification tests.",
+                    Status = RequestStatus.Pending,
+                    CreatedAtUtc = DateTime.UtcNow.AddHours(-6)
+                }
+            );
+            await context.SaveChangesAsync();
+        }
     }
 
     private static async Task EnsureUserAsync(
@@ -245,7 +321,7 @@ public static class DbInitializer
         string firstName,
         string lastName,
         string userCode,
-        Guid tenantId,
+        Guid? tenantId,
         string roleName)
     {
         var user = await userManager.FindByEmailAsync(email);
