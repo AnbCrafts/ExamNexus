@@ -10,3 +10,4 @@ D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Domain\obj\Debug\net9.0\Ex
 D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Domain\obj\Debug\net9.0\refint\ExamNexus.Domain.dll
 D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Domain\obj\Debug\net9.0\ExamNexus.Domain.pdb
 D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Domain\obj\Debug\net9.0\ref\ExamNexus.Domain.dll
+D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Domain\obj\Debug\net9.0\ExamNexus.Domain.sourcelink.json

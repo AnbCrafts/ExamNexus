@@ -13,3 +13,4 @@ D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Application\obj\Debug\net9
 D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Application\obj\Debug\net9.0\refint\ExamNexus.Application.dll
 D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Application\obj\Debug\net9.0\ExamNexus.Application.pdb
 D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Application\obj\Debug\net9.0\ref\ExamNexus.Application.dll
+D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Application\obj\Debug\net9.0\ExamNexus.Application.sourcelink.json

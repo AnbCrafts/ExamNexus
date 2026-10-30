@@ -17,3 +17,4 @@ D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Infrastructure\obj\Debug\n
 D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Infrastructure\obj\Debug\net9.0\ExamNexus.Infrastructure.pdb
 D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Infrastructure\obj\Debug\net9.0\ExamNexus.Infrastructure.genruntimeconfig.cache
 D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Infrastructure\obj\Debug\net9.0\ref\ExamNexus.Infrastructure.dll
+D:\Anubhaw\Projects\Structure\ExamNexus\src\ExamNexus.Infrastructure\obj\Debug\net9.0\ExamNexus.Infrastructure.sourcelink.json

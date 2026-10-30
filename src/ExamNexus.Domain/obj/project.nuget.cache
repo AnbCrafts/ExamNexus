@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "lBDtts5AIhE=",
+  "dgSpecHash": "6oj+r3YoMAU=",
   "success": true,
   "projectFilePath": "D:\\Anubhaw\\Projects\\Structure\\ExamNexus\\src\\ExamNexus.Domain\\ExamNexus.Domain.csproj",
   "expectedPackageFiles": [
@@ -14,7 +14,10 @@
     "C:\\Users\\anubhawgupta\\.nuget\\packages\\microsoft.extensions.logging\\9.0.2\\microsoft.extensions.logging.9.0.2.nupkg.sha512",
     "C:\\Users\\anubhawgupta\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\9.0.2\\microsoft.extensions.logging.abstractions.9.0.2.nupkg.sha512",
     "C:\\Users\\anubhawgupta\\.nuget\\packages\\microsoft.extensions.options\\9.0.2\\microsoft.extensions.options.9.0.2.nupkg.sha512",
-    "C:\\Users\\anubhawgupta\\.nuget\\packages\\microsoft.extensions.primitives\\9.0.2\\microsoft.extensions.primitives.9.0.2.nupkg.sha512"
+    "C:\\Users\\anubhawgupta\\.nuget\\packages\\microsoft.extensions.primitives\\9.0.2\\microsoft.extensions.primitives.9.0.2.nupkg.sha512",
+    "C:\\Users\\anubhawgupta\\.nuget\\packages\\microsoft.netcore.app.ref\\9.0.14\\microsoft.netcore.app.ref.9.0.14.nupkg.sha512",
+    "C:\\Users\\anubhawgupta\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\9.0.14\\microsoft.windowsdesktop.app.ref.9.0.14.nupkg.sha512",
+    "C:\\Users\\anubhawgupta\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\9.0.14\\microsoft.aspnetcore.app.ref.9.0.14.nupkg.sha512"
   ],
   "logs": []
 }
