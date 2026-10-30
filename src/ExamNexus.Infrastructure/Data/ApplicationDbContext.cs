@@ -174,16 +174,17 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
         // ====================================================================
         // MULTI-TENANT GLOBAL QUERY FILTERS
         // Every database read automatically isolates data by TenantId!
+        // Using null comparison instead of .Value prevents EF Core ParameterExtraction exceptions when TenantId is null
         // ====================================================================
-        builder.Entity<Course>().HasQueryFilter(e => !_tenantService.CurrentTenantId.HasValue || e.TenantId == _tenantService.CurrentTenantId.Value);
-        builder.Entity<QuestionBank>().HasQueryFilter(e => !_tenantService.CurrentTenantId.HasValue || e.TenantId == _tenantService.CurrentTenantId.Value);
-        builder.Entity<Question>().HasQueryFilter(e => !_tenantService.CurrentTenantId.HasValue || e.TenantId == _tenantService.CurrentTenantId.Value);
-        builder.Entity<Exam>().HasQueryFilter(e => !_tenantService.CurrentTenantId.HasValue || e.TenantId == _tenantService.CurrentTenantId.Value);
-        builder.Entity<ExamQuestion>().HasQueryFilter(e => !_tenantService.CurrentTenantId.HasValue || e.TenantId == _tenantService.CurrentTenantId.Value);
-        builder.Entity<CandidateExamSession>().HasQueryFilter(e => !_tenantService.CurrentTenantId.HasValue || e.TenantId == _tenantService.CurrentTenantId.Value);
-        builder.Entity<CandidateAnswer>().HasQueryFilter(e => !_tenantService.CurrentTenantId.HasValue || e.TenantId == _tenantService.CurrentTenantId.Value);
-        builder.Entity<ProctorEvent>().HasQueryFilter(e => !_tenantService.CurrentTenantId.HasValue || e.TenantId == _tenantService.CurrentTenantId.Value);
-        builder.Entity<RefreshToken>().HasQueryFilter(e => !_tenantService.CurrentTenantId.HasValue || e.TenantId == _tenantService.CurrentTenantId.Value);
+        builder.Entity<Course>().HasQueryFilter(e => _tenantService.CurrentTenantId == null || e.TenantId == _tenantService.CurrentTenantId);
+        builder.Entity<QuestionBank>().HasQueryFilter(e => _tenantService.CurrentTenantId == null || e.TenantId == _tenantService.CurrentTenantId);
+        builder.Entity<Question>().HasQueryFilter(e => _tenantService.CurrentTenantId == null || e.TenantId == _tenantService.CurrentTenantId);
+        builder.Entity<Exam>().HasQueryFilter(e => _tenantService.CurrentTenantId == null || e.TenantId == _tenantService.CurrentTenantId);
+        builder.Entity<ExamQuestion>().HasQueryFilter(e => _tenantService.CurrentTenantId == null || e.TenantId == _tenantService.CurrentTenantId);
+        builder.Entity<CandidateExamSession>().HasQueryFilter(e => _tenantService.CurrentTenantId == null || e.TenantId == _tenantService.CurrentTenantId);
+        builder.Entity<CandidateAnswer>().HasQueryFilter(e => _tenantService.CurrentTenantId == null || e.TenantId == _tenantService.CurrentTenantId);
+        builder.Entity<ProctorEvent>().HasQueryFilter(e => _tenantService.CurrentTenantId == null || e.TenantId == _tenantService.CurrentTenantId);
+        builder.Entity<RefreshToken>().HasQueryFilter(e => _tenantService.CurrentTenantId == null || e.TenantId == _tenantService.CurrentTenantId);
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

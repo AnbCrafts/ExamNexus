@@ -35,20 +35,94 @@ public class AccountController : Controller
 
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> Login(string? returnUrl = null)
+    public async Task<IActionResult> Login(string? returnUrl = null, string? role = null)
     {
+        // 1. If already authenticated:
         if (User.Identity?.IsAuthenticated == true)
         {
+            // If the user requested a specific role, verify whether they already have that role or wish to switch
+            if (!string.IsNullOrEmpty(role))
+            {
+                var targetRole = role.Trim().ToLowerInvariant();
+                var currentIsSuperAdmin = User.IsInRole("SystemAdmin") || User.FindFirst("IsSystemAdmin")?.Value == "true";
+                var currentIsProctor = User.IsInRole("Proctor");
+                var currentIsInstructor = User.IsInRole("Instructor");
+
+                if (targetRole == "superadmin" && currentIsSuperAdmin)
+                {
+                    return RedirectToAction("Index", "Admin");
+                }
+                if (targetRole == "proctor" && currentIsProctor)
+                {
+                    return RedirectToAction("Index", "Proctor");
+                }
+                if (targetRole == "instructor" && currentIsInstructor)
+                {
+                    return RedirectToAction("Index", "Exam");
+                }
+
+                // If user is logged in as another role, sign out first to allow switching roles cleanly
+                await _signInManager.SignOutAsync();
+                HttpContext.Session.Clear();
+                return RedirectToAction("Login", new { role, returnUrl });
+            }
+
+            // Normal redirection for authenticated user
+            if (User.IsInRole("SystemAdmin") || User.FindFirst("IsSystemAdmin")?.Value == "true")
+            {
+                return RedirectToAction("Index", "Admin");
+            }
+            if (User.IsInRole("Proctor"))
+            {
+                return RedirectToAction("Index", "Proctor");
+            }
             return RedirectToAction("Index", "Dashboard");
         }
 
         ViewBag.Tenants = await _dbContext.Tenants.Where(t => t.IsActive).ToListAsync();
         ViewData["ReturnUrl"] = returnUrl;
-        return View(new LoginRequestDto
+        ViewBag.SelectedRole = role?.ToLowerInvariant();
+
+        var defaultModel = new LoginRequestDto
         {
             TenantIdentifier = _tenantService.CurrentTenantIdentifier ?? "acme-corp",
             ReturnUrl = returnUrl
-        });
+        };
+
+        // Pre-fill test credentials based on selected role
+        if (!string.IsNullOrEmpty(role))
+        {
+            switch (role.ToLowerInvariant())
+            {
+                case "superadmin":
+                    defaultModel.TenantIdentifier = "acme-corp"; // dropdown default, handled dynamically
+                    defaultModel.UsernameOrEmail = "superadmin@examnexus.com";
+                    defaultModel.Password = "P@ssword123!";
+                    break;
+                case "instructor":
+                    defaultModel.TenantIdentifier = "acme-corp";
+                    defaultModel.UsernameOrEmail = "instructor@acme.com";
+                    defaultModel.Password = "P@ssword123!";
+                    break;
+                case "proctor":
+                    defaultModel.TenantIdentifier = "acme-corp";
+                    defaultModel.UsernameOrEmail = "proctor@acme.com";
+                    defaultModel.Password = "P@ssword123!";
+                    break;
+                case "admin":
+                    defaultModel.TenantIdentifier = "acme-corp";
+                    defaultModel.UsernameOrEmail = "admin@acme.com";
+                    defaultModel.Password = "P@ssword123!";
+                    break;
+                case "candidate":
+                    defaultModel.TenantIdentifier = "acme-corp";
+                    defaultModel.UsernameOrEmail = "student@acme.com";
+                    defaultModel.Password = "P@ssword123!";
+                    break;
+            }
+        }
+
+        return View(defaultModel);
     }
 
     [HttpPost]
@@ -102,6 +176,12 @@ public class AccountController : Controller
 
         // 2. Resolve Tenant for Organization Users
         var tenantSlug = (model.TenantIdentifier ?? string.Empty).Trim().ToLowerInvariant();
+        if (string.IsNullOrEmpty(tenantSlug))
+        {
+            ModelState.AddModelError("TenantIdentifier", "Please select an organization tenant.");
+            return View(model);
+        }
+
         var tenant = await _dbContext.Tenants
             .FirstOrDefaultAsync(t => t.Identifier.ToLower() == tenantSlug && t.IsActive);
 

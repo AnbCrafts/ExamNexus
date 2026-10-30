@@ -4,9 +4,8 @@ namespace ExamNexus.Application.DTOs;
 
 public class LoginRequestDto
 {
-    [Required]
     [Display(Name = "Tenant Organization")]
-    public string TenantIdentifier { get; set; } = string.Empty; // e.g. "acme-corp"
+    public string? TenantIdentifier { get; set; } = string.Empty; // e.g. "acme-corp"
 
     [Required]
     public string UsernameOrEmail { get; set; } = string.Empty;

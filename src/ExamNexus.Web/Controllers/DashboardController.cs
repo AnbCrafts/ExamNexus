@@ -25,12 +25,22 @@ public class DashboardController : Controller
 
     public async Task<IActionResult> Index()
     {
+        // Platform SuperAdmins have their dedicated multi-tenant governance console
+        if (User.IsInRole("SystemAdmin") || _currentUserService.IsInRole("SystemAdmin") || User.FindFirst("IsSystemAdmin")?.Value == "true")
+        {
+            return RedirectToAction("Index", "Admin");
+        }
+
         ViewBag.TenantName = _tenantService.CurrentTenantName ?? "Acme Academy";
         ViewBag.TenantIdentifier = _tenantService.CurrentTenantIdentifier ?? "acme-corp";
 
-        var tenant = await _context.Tenants.FirstOrDefaultAsync(t => t.Id == _tenantService.CurrentTenantId);
-        ViewBag.PlanName = tenant?.Plan.ToString() ?? "Professional";
-        ViewBag.PlanMaxExams = tenant?.PlanMaxExams ?? 5;
+        var currentTenantId = _tenantService.CurrentTenantId;
+        var tenant = currentTenantId.HasValue 
+            ? await _context.Tenants.FirstOrDefaultAsync(t => t.Id == currentTenantId.Value) 
+            : null;
+
+        ViewBag.PlanName = tenant?.Plan.ToString() ?? "Enterprise";
+        ViewBag.PlanMaxExams = tenant?.PlanMaxExams ?? 999;
 
         // Global / Tenant Statistics
         ViewBag.TotalCourses = await _context.Courses.CountAsync();

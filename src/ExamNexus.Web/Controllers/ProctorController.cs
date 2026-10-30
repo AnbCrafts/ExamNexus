@@ -67,12 +67,18 @@ public class ProctorController : Controller
             })
             .ToListAsync();
 
+        var scoredSessions = await _context.CandidateExamSessions
+            .Where(s => s.Percentage.HasValue)
+            .Select(s => s.Percentage!.Value)
+            .ToListAsync();
+        decimal avgScore = scoredSessions.Count > 0 ? Math.Round(scoredSessions.Average(), 2) : 0.00m;
+
         var dashboard = new ProctorDashboardDto
         {
             ActiveLiveSessionsCount = activeSessions.Count,
             CompletedSessionsCount = await _context.CandidateExamSessions.CountAsync(s => s.Status == ExamSessionStatus.Submitted),
             FlaggedCheatingCount = await _context.CandidateExamSessions.CountAsync(s => s.IsFlagged),
-            AverageCandidateScorePercent = await _context.CandidateExamSessions.Where(s => s.Percentage.HasValue).AverageAsync(s => s.Percentage) ?? 0.00m,
+            AverageCandidateScorePercent = avgScore,
             ActiveSessions = activeSessions,
             RecentEvents = recentEvents
         };
