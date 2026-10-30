@@ -165,19 +165,42 @@
         <!-- Right Column: Interactive Question & Answer Builder -->
         <div class="col-lg-7">
             <div class="card card-enterprise mb-4">
-                <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center">
+                <div class="card-header bg-white py-3 px-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <div>
                         <h5 class="fw-bold text-dark mb-0">
                             <i class="fa-solid fa-list-ol text-primary me-2"></i> Assessment Questions &amp; Answers
                         </h5>
-                        <div class="text-muted small">Add multiple choice questions and mark the correct answer.</div>
+                        <div class="text-muted small">Add multiple choice questions, edit point values, and mark the correct answer.</div>
                     </div>
-                    <button type="button" class="btn btn-sm btn-outline-primary fw-semibold" onclick="addQuestionCard()">
-                        <i class="fa-solid fa-plus me-1"></i> Add Question
-                    </button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary fw-semibold" onclick="loadSampleQuestion()" title="Load a demo question template">
+                            <i class="fa-solid fa-wand-magic-sparkles me-1 text-warning"></i> Load Sample
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger fw-semibold" onclick="clearAllQuestions()" title="Remove all questions">
+                            <i class="fa-solid fa-trash-can me-1"></i> Clear All
+                        </button>
+                        <button type="button" class="btn btn-sm btn-primary fw-semibold shadow-sm" onclick="addQuestionCard()">
+                            <i class="fa-solid fa-plus me-1"></i> Add Question
+                        </button>
+                    </div>
                 </div>
 
                 <div class="card-body p-4" id="questionsContainer">
+                    <!-- Empty State Placeholder (Visible when 0 questions) -->
+                    <div id="noQuestionsAlert" class="text-center p-5 border border-dashed rounded-3 bg-light text-muted @(Model.Questions.Any() ? "d-none" : "")">
+                        <i class="fa-regular fa-circle-question fs-2 mb-2 d-block text-secondary"></i>
+                        <h6 class="fw-bold text-dark mb-1">No questions added yet</h6>
+                        <p class="small mb-3 text-muted">You can add your own custom questions or load a sample question to get started.</p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <button type="button" class="btn btn-sm btn-primary fw-semibold" onclick="addQuestionCard()">
+                                <i class="fa-solid fa-plus me-1"></i> Add Blank Question
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary fw-semibold" onclick="loadSampleQuestion()">
+                                <i class="fa-solid fa-wand-magic-sparkles me-1 text-warning"></i> Load Sample Question
+                            </button>
+                        </div>
+                    </div>
+
                     @for (int i = 0; i < Model.Questions.Count; i++)
                     {
                         var q = Model.Questions[i];
@@ -189,12 +212,9 @@
                                         <span class="input-group-text">Pts</span>
                                         <input type="number" name="Questions[@i].Points" class="form-control text-end" value="@q.Points" min="1" max="100" />
                                     </div>
-                                    @if (i > 0)
-                                    {
-                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeQuestionBlock(@i)">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                    }
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeQuestionBlock(this)" title="Delete this question">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
                                 </div>
                             </div>
 
@@ -264,11 +284,22 @@
 
 @section Scripts {
     <script>
-        let questionCounter = @Model.Questions.Count;
-
-        function addQuestionCard() {
-            const index = questionCounter++;
+        function addQuestionCard(data) {
             const container = document.getElementById('questionsContainer');
+            const emptyBox = document.getElementById('noQuestionsAlert');
+            if (emptyBox) emptyBox.classList.add('d-none');
+
+            const currentBlocks = document.querySelectorAll('.question-block');
+            const index = currentBlocks.length;
+
+            const qText = data ? data.text : '';
+            const qPoints = data ? data.points : 10;
+            const qCorrect = data ? data.correctIndex : 0;
+            const qOptA = data ? data.optionA : '';
+            const qOptB = data ? data.optionB : '';
+            const qOptC = data ? data.optionC : '';
+            const qOptD = data ? data.optionD : '';
+            const qExp = data ? data.explanation : '';
 
             const card = document.createElement('div');
             card.className = 'card mb-4 border p-3 rounded-3 question-block';
@@ -276,53 +307,53 @@
 
             card.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="badge bg-primary bg-opacity-10 text-primary fw-bold q-num-badge">Question ${document.querySelectorAll('.question-block').length + 1}</span>
+                    <span class="badge bg-primary bg-opacity-10 text-primary fw-bold q-num-badge">Question ${index + 1}</span>
                     <div class="d-flex align-items-center gap-2">
                         <div class="input-group input-group-sm" style="width: 140px;">
                             <span class="input-group-text">Pts</span>
-                            <input type="number" name="Questions[${index}].Points" class="form-control text-end" value="10" min="1" max="100" />
+                            <input type="number" name="Questions[${index}].Points" class="form-control text-end" value="${qPoints}" min="1" max="100" />
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeQuestionBlock(${index})">
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeQuestionBlock(this)" title="Delete this question">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
                 </div>
                 <div class="mb-3">
-                    <textarea name="Questions[${index}].Text" class="form-control" rows="2" placeholder="Enter question prompt..." required></textarea>
+                    <textarea name="Questions[${index}].Text" class="form-control" rows="2" placeholder="Enter question prompt..." required>${qText}</textarea>
                 </div>
                 <label class="form-label small fw-bold text-secondary mb-1">
                     Options (Select radio for the Correct Answer <i class="fa-solid fa-circle-check text-success"></i>)
                 </label>
                 <div class="input-group mb-2">
                     <div class="input-group-text bg-white">
-                        <input type="radio" name="Questions[${index}].CorrectOptionIndex" value="0" class="form-check-input mt-0" checked title="Mark as correct answer" />
+                        <input type="radio" name="Questions[${index}].CorrectOptionIndex" value="0" class="form-check-input mt-0" ${qCorrect === 0 ? 'checked' : ''} title="Mark as correct answer" />
                         <span class="ms-1 fw-bold small text-muted">A</span>
                     </div>
-                    <input type="text" name="Questions[${index}].OptionA" class="form-control" placeholder="Option A text" required />
+                    <input type="text" name="Questions[${index}].OptionA" class="form-control" placeholder="Option A text" value="${qOptA}" required />
                 </div>
                 <div class="input-group mb-2">
                     <div class="input-group-text bg-white">
-                        <input type="radio" name="Questions[${index}].CorrectOptionIndex" value="1" class="form-check-input mt-0" title="Mark as correct answer" />
+                        <input type="radio" name="Questions[${index}].CorrectOptionIndex" value="1" class="form-check-input mt-0" ${qCorrect === 1 ? 'checked' : ''} title="Mark as correct answer" />
                         <span class="ms-1 fw-bold small text-muted">B</span>
                     </div>
-                    <input type="text" name="Questions[${index}].OptionB" class="form-control" placeholder="Option B text" required />
+                    <input type="text" name="Questions[${index}].OptionB" class="form-control" placeholder="Option B text" value="${qOptB}" required />
                 </div>
                 <div class="input-group mb-2">
                     <div class="input-group-text bg-white">
-                        <input type="radio" name="Questions[${index}].CorrectOptionIndex" value="2" class="form-check-input mt-0" title="Mark as correct answer" />
+                        <input type="radio" name="Questions[${index}].CorrectOptionIndex" value="2" class="form-check-input mt-0" ${qCorrect === 2 ? 'checked' : ''} title="Mark as correct answer" />
                         <span class="ms-1 fw-bold small text-muted">C</span>
                     </div>
-                    <input type="text" name="Questions[${index}].OptionC" class="form-control" placeholder="Option C text" />
+                    <input type="text" name="Questions[${index}].OptionC" class="form-control" placeholder="Option C text" value="${qOptC}" />
                 </div>
                 <div class="input-group mb-2">
                     <div class="input-group-text bg-white">
-                        <input type="radio" name="Questions[${index}].CorrectOptionIndex" value="3" class="form-check-input mt-0" title="Mark as correct answer" />
+                        <input type="radio" name="Questions[${index}].CorrectOptionIndex" value="3" class="form-check-input mt-0" ${qCorrect === 3 ? 'checked' : ''} title="Mark as correct answer" />
                         <span class="ms-1 fw-bold small text-muted">D</span>
                     </div>
-                    <input type="text" name="Questions[${index}].OptionD" class="form-control" placeholder="Option D text" />
+                    <input type="text" name="Questions[${index}].OptionD" class="form-control" placeholder="Option D text" value="${qOptD}" />
                 </div>
                 <div class="mt-2">
-                    <input type="text" name="Questions[${index}].Explanation" class="form-control form-control-sm text-muted" placeholder="Optional rationale / explanation for grading review" />
+                    <input type="text" name="Questions[${index}].Explanation" class="form-control form-control-sm text-muted" placeholder="Optional rationale / explanation for grading review" value="${qExp}" />
                 </div>
             `;
 
@@ -330,21 +361,86 @@
             renumberQuestions();
         }
 
-        function removeQuestionBlock(index) {
-            const el = document.getElementById(`question_block_${index}`);
-            if (el) {
-                el.remove();
+        function removeQuestionBlock(btn) {
+            const card = btn.closest('.question-block');
+            if (card) {
+                card.remove();
                 renumberQuestions();
             }
         }
 
-        function renumberQuestions() {
-            const blocks = document.querySelectorAll('.question-block');
-            blocks.forEach((b, idx) => {
-                const badge = b.querySelector('.q-num-badge');
-                if (badge) badge.innerText = `Question ${idx + 1}`;
+        function clearAllQuestions() {
+            if (confirm('Are you sure you want to remove all questions from this assessment?')) {
+                const blocks = document.querySelectorAll('.question-block');
+                blocks.forEach(b => b.remove());
+                renumberQuestions();
+            }
+        }
+
+        function loadSampleQuestion() {
+            addQuestionCard({
+                text: "What is the primary benefit of deploying applications across multiple availability zones?",
+                points: 10,
+                correctIndex: 1,
+                optionA: "Reduced computational licensing cost",
+                optionB: "High availability and protection against datacenter failures",
+                optionC: "Elimination of external identity providers",
+                optionD: "Local database storage caching",
+                explanation: "Availability zones provide independent power, cooling, and networking within a region."
             });
         }
+
+        function renumberQuestions() {
+            const blocks = document.querySelectorAll('.question-block');
+            const emptyBox = document.getElementById('noQuestionsAlert');
+
+            if (blocks.length === 0) {
+                if (emptyBox) emptyBox.classList.remove('d-none');
+            } else {
+                if (emptyBox) emptyBox.classList.add('d-none');
+            }
+
+            blocks.forEach((block, idx) => {
+                block.id = `question_block_${idx}`;
+                const badge = block.querySelector('.q-num-badge');
+                if (badge) badge.innerText = `Question ${idx + 1}`;
+
+                // Re-sequence input names for exact ASP.NET Core model binding
+                const points = block.querySelector('input[name*="Points"]');
+                if (points) points.name = `Questions[${idx}].Points`;
+
+                const text = block.querySelector('textarea[name*="Text"]');
+                if (text) text.name = `Questions[${idx}].Text`;
+
+                const radios = block.querySelectorAll('input[type="radio"][name*="CorrectOptionIndex"]');
+                radios.forEach(r => r.name = `Questions[${idx}].CorrectOptionIndex`);
+
+                const optA = block.querySelector('input[name*="OptionA"]');
+                if (optA) optA.name = `Questions[${idx}].OptionA`;
+
+                const optB = block.querySelector('input[name*="OptionB"]');
+                if (optB) optB.name = `Questions[${idx}].OptionB`;
+
+                const optC = block.querySelector('input[name*="OptionC"]');
+                if (optC) optC.name = `Questions[${idx}].OptionC`;
+
+                const optD = block.querySelector('input[name*="OptionD"]');
+                if (optD) optD.name = `Questions[${idx}].OptionD`;
+
+                const exp = block.querySelector('input[name*="Explanation"]');
+                if (exp) exp.name = `Questions[${idx}].Explanation`;
+            });
+        }
+
+        // Validate on submit: Must have at least 1 question
+        document.getElementById('examCreateForm').addEventListener('submit', function(e) {
+            const count = document.querySelectorAll('.question-block').length;
+            if (count === 0) {
+                e.preventDefault();
+                alert('Please add at least one question before publishing the assessment.');
+                return false;
+            }
+        });
 
         document.getElementById('courseSelect').addEventListener('change', function() {
             const box = document.getElementById('newCourseBox');

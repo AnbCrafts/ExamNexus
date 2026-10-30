@@ -365,23 +365,13 @@ public class ExamController : Controller
             {
                 new()
                 {
-                    Text = "What is the primary benefit of deploying applications across multiple availability zones?",
+                    Text = string.Empty,
                     Points = 10,
-                    CorrectOptionIndex = 1,
-                    OptionA = "Reduced computational licensing cost",
-                    OptionB = "High availability and protection against datacenter failures",
-                    OptionC = "Elimination of external identity providers",
-                    OptionD = "Local database storage caching"
-                },
-                new()
-                {
-                    Text = "Which security architecture operates on the principle of 'never trust, always explicitly verify'?",
-                    Points = 10,
-                    CorrectOptionIndex = 2,
-                    OptionA = "Perimeter Defense Only",
-                    OptionB = "Implicit Network Trust",
-                    OptionC = "Zero Trust Security Architecture",
-                    OptionD = "Static Firewall Access Control"
+                    CorrectOptionIndex = 0,
+                    OptionA = string.Empty,
+                    OptionB = string.Empty,
+                    OptionC = string.Empty,
+                    OptionD = string.Empty
                 }
             }
         };
@@ -483,8 +473,10 @@ public class ExamController : Controller
         decimal totalMarks = 0;
         int orderIndex = 1;
 
-        foreach (var qDto in model.Questions)
+        if (model.Questions != null)
         {
+            foreach (var qDto in model.Questions)
+            {
             var question = new Question
             {
                 Id = Guid.NewGuid(),
@@ -522,6 +514,7 @@ public class ExamController : Controller
             });
 
             totalMarks += qDto.Points;
+        }
         }
 
         exam.TotalMarks = totalMarks > 0 ? totalMarks : 100.00m;
