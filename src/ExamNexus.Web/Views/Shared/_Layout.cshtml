@@ -35,55 +35,181 @@
         }
 
         .navbar-examnexus {
-            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+            background: #0f172a;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.25);
+            min-height: 64px;
+            padding-top: 0;
+            padding-bottom: 0;
         }
 
-        .navbar-brand {
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            font-size: 1.35rem;
-            color: #ffffff !important;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .navbar-brand i {
-            color: #818cf8;
-        }
-
-        .tenant-pill {
-            background: rgba(255, 255, 255, 0.12);
-            color: #e0e7ff;
-            font-size: 0.78rem;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 9999px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+        .brand-icon-box {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 1rem;
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.35);
         }
 
-        .tenant-pill i {
-            color: #38bdf8;
-            font-size: 0.7rem;
-        }
-
-        .nav-link {
-            font-weight: 500;
-            font-size: 0.92rem;
-            color: #cbd5e1 !important;
-            padding: 8px 14px !important;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-        }
-
-        .nav-link:hover, .nav-link.active {
+        .brand-text {
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            font-size: 1.25rem;
             color: #ffffff !important;
-            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .brand-highlight {
+            background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .badge-cloud {
+            background: rgba(99, 102, 241, 0.15);
+            color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.6px;
+            padding: 3px 8px;
+        }
+
+        /* Single-line sleek Tenant Chip */
+        .tenant-chip {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 4px 10px;
+            max-width: 220px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 0.78rem;
+            color: #e2e8f0;
+        }
+
+        .tenant-name {
+            font-weight: 600;
+            color: #f1f5f9;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .tenant-slug {
+            color: #94a3b8;
+            font-size: 0.72rem;
+            font-family: monospace;
+        }
+
+        /* Nav Links - Guaranteed Single-Row Inline-Flex */
+        .navbar-examnexus .nav-link {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 7px !important;
+            white-space: nowrap !important;
+            font-size: 0.86rem !important;
+            font-weight: 500 !important;
+            color: #94a3b8 !important;
+            padding: 7px 12px !important;
+            border-radius: 8px !important;
+            transition: all 0.15s ease-in-out !important;
+        }
+
+        .navbar-examnexus .nav-link i {
+            font-size: 0.92rem;
+            opacity: 0.85;
+        }
+
+        .navbar-examnexus .nav-link:hover {
+            color: #ffffff !important;
+            background: rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .navbar-examnexus .nav-link.active {
+            color: #ffffff !important;
+            background: rgba(99, 102, 241, 0.18) !important;
+            border: 1px solid rgba(99, 102, 241, 0.3) !important;
+        }
+
+        .nav-link-admin {
+            color: #fde047 !important;
+        }
+
+        .nav-link-admin:hover {
+            background: rgba(253, 224, 71, 0.12) !important;
+        }
+
+        /* User Menu Dropdown Button */
+        .user-menu-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 4px 10px;
+            color: #ffffff;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .user-menu-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .user-avatar-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4);
+        }
+
+        .user-name {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #f8fafc;
+            line-height: 1.15;
+        }
+
+        .user-sub {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            line-height: 1;
+        }
+
+        .user-caret {
+            font-size: 0.65rem;
+            color: #94a3b8;
+        }
+
+        /* Responsive Mobile Drawer */
+        @@media (max-width: 1199.98px) {
+            .navbar-collapse {
+                background: #0f172a;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 12px;
+                padding: 1rem;
+                margin-top: 0.75rem;
+                margin-bottom: 0.75rem;
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            }
+
+            .navbar-examnexus .nav-link {
+                width: 100% !important;
+                padding: 9px 12px !important;
+                margin-bottom: 2px;
+            }
         }
 
         .btn-brand-primary {
@@ -148,72 +274,87 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-lg navbar-dark navbar-examnexus py-2.5">
-            <div class="container-fluid px-lg-4">
-                <a class="navbar-brand" asp-controller="Home" asp-action="Index">
-                    <i class="fa-solid fa-graduation-cap"></i>
-                    <span>Exam<strong style="color: #818cf8;">Nexus</strong></span>
-                    <span class="badge bg-indigo-900 border border-indigo-700 text-indigo-200 ms-1 fw-semibold" style="font-size: 0.68rem; letter-spacing: 0.5px;">PROCTORED SAAS</span>
-                </a>
+        <nav class="navbar navbar-expand-xl navbar-dark navbar-examnexus sticky-top">
+            <div class="container-fluid px-3 px-lg-4">
+                <!-- Brand & Organization Context -->
+                <div class="d-flex align-items-center">
+                    <a class="navbar-brand me-1 d-flex align-items-center" asp-controller="Home" asp-action="Index">
+                        <div class="brand-icon-box me-2">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                        </div>
+                        <span class="brand-text">Exam<span class="brand-highlight">Nexus</span></span>
+                    </a>
+                    <span class="badge rounded-pill badge-cloud ms-1 d-none d-sm-inline-block">SAAS</span>
 
-                @if (User.Identity?.IsAuthenticated == true)
-                {
-                    var isSysAdmin = User.IsInRole("SystemAdmin") || User.FindFirst("IsSystemAdmin")?.Value == "true";
-                    var tenantName = User.FindFirst("TenantName")?.Value ?? (isSysAdmin ? "Platform Operations" : "Acme Academy");
-                    var tenantId = User.FindFirst("TenantIdentifier")?.Value ?? (isSysAdmin ? "global" : "acme-corp");
-                    <div class="tenant-pill ms-lg-3 d-none d-md-inline-flex">
-                        <i class="fa-solid @(isSysAdmin ? "fa-crown text-warning" : "fa-building-columns")"></i>
-                        <span>@tenantName</span>
-                        <code class="text-white-50 ms-1" style="font-size: 0.75rem;">(@tenantId)</code>
-                    </div>
-                }
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        var isSysAdmin = User.IsInRole("SystemAdmin") || User.FindFirst("IsSystemAdmin")?.Value == "true";
+                        var tenantName = User.FindFirst("TenantName")?.Value ?? (isSysAdmin ? "Platform Operations" : "Acme Academy");
+                        var tenantId = User.FindFirst("TenantIdentifier")?.Value ?? (isSysAdmin ? "global" : "acme-corp");
+                        
+                        <div class="tenant-chip ms-3 d-none d-md-flex align-items-center gap-2" title="Organization: @tenantName (@tenantId)">
+                            <i class="fa-solid @(isSysAdmin ? "fa-crown text-warning" : "fa-building text-info")" style="font-size: 0.75rem;"></i>
+                            <span class="tenant-name">@tenantName</span>
+                            <span class="tenant-slug">(@tenantId)</span>
+                        </div>
+                    }
+                </div>
 
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nexusNavbar" aria-controls="nexusNavbar" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
+                <!-- Responsive Mobile Toggler -->
+                <button class="navbar-toggler border-0 shadow-none px-2 py-1" type="button" data-bs-toggle="collapse" data-bs-target="#nexusNavbar" aria-controls="nexusNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                    <i class="fa-solid fa-bars text-white fs-5"></i>
                 </button>
 
+                <!-- Navigation Links & User Menu (Collapsible) -->
                 <div class="collapse navbar-collapse" id="nexusNavbar">
-                    <ul class="navbar-nav me-auto ms-lg-4 mb-2 mb-lg-0 gap-1">
+                    <ul class="navbar-nav mx-auto my-2 my-xl-0 align-items-xl-center gap-1">
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Home" asp-action="Index">
-                                <i class="fa-solid fa-house me-1"></i> Home
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index">
+                                <i class="fa-solid fa-house"></i>
+                                <span>Home</span>
                             </a>
                         </li>
+
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             @if (User.IsInRole("SystemAdmin") || User.FindFirst("IsSystemAdmin")?.Value == "true")
                             {
                                 <li class="nav-item">
-                                    <a class="nav-link text-warning fw-bold" asp-controller="Admin" asp-action="Index">
-                                        <i class="fa-solid fa-crown me-1 text-warning"></i> SuperAdmin Console
+                                    <a class="nav-link nav-link-admin @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")" asp-controller="Admin" asp-action="Index">
+                                        <i class="fa-solid fa-crown text-warning"></i>
+                                        <span>SuperAdmin</span>
                                     </a>
                                 </li>
                             }
 
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Dashboard" asp-action="Index">
-                                    <i class="fa-solid fa-chart-pie me-1"></i> Dashboard
+                                <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")" asp-controller="Dashboard" asp-action="Index">
+                                    <i class="fa-solid fa-chart-pie"></i>
+                                    <span>Dashboard</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Exam" asp-action="Index">
-                                    <i class="fa-solid fa-file-signature me-1"></i> Assessments
+                                <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Exam" ? "active" : "")" asp-controller="Exam" asp-action="Index">
+                                    <i class="fa-solid fa-file-signature"></i>
+                                    <span>Assessments</span>
                                 </a>
                             </li>
 
                             @if (User.IsInRole("SystemAdmin") || User.IsInRole("TenantAdmin") || User.IsInRole("Instructor") || User.IsInRole("Proctor"))
                             {
                                 <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Proctor" asp-action="Index">
-                                        <i class="fa-solid fa-shield-halved me-1 text-warning"></i> Proctor Command Center
-                                        <span class="signalr-live-indicator ms-1" title="Real-Time WebSocket Ready"></span>
+                                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Proctor" ? "active" : "")" asp-controller="Proctor" asp-action="Index">
+                                        <i class="fa-solid fa-shield-halved text-warning"></i>
+                                        <span>Proctor Hub</span>
+                                        <span class="signalr-live-indicator ms-1" title="Real-Time WebSocket Active"></span>
                                     </a>
                                 </li>
                             }
 
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Dashboard" asp-action="Architecture">
-                                    <i class="fa-solid fa-layer-group me-1 text-info"></i> Architecture
+                                <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Architecture" ? "active" : "")" asp-controller="Dashboard" asp-action="Architecture">
+                                    <i class="fa-solid fa-layer-group text-info"></i>
+                                    <span>Architecture</span>
                                 </a>
                             </li>
                         }
@@ -221,70 +362,105 @@
                         {
                             <li class="nav-item">
                                 <a class="nav-link" href="/#plans">
-                                    <i class="fa-solid fa-layer-group me-1"></i> Subscription Plans
+                                    <i class="fa-solid fa-layer-group"></i>
+                                    <span>Subscription Plans</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Exam" asp-action="Join">
-                                    <i class="fa-solid fa-key me-1 text-info"></i> Candidate Join
+                                    <i class="fa-solid fa-key text-info"></i>
+                                    <span>Candidate Join</span>
                                 </a>
                             </li>
                         }
                     </ul>
 
-                    <ul class="navbar-nav ms-auto align-items-center gap-2">
+                    <!-- Right Controls / User Profile -->
+                    <div class="d-flex align-items-center gap-2 pt-2 pt-xl-0 border-top border-xl-0 border-secondary border-opacity-25 mt-2 mt-xl-0">
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             var role = User.FindFirst(ClaimTypes.Role)?.Value ?? "User";
                             var fullName = User.FindFirst("FullName")?.Value ?? User.Identity.Name;
                             var userCode = User.FindFirst("UserCode")?.Value ?? "USR";
+                            var isSysAdmin = User.IsInRole("SystemAdmin") || User.FindFirst("IsSystemAdmin")?.Value == "true";
+                            var tenantName = User.FindFirst("TenantName")?.Value ?? (isSysAdmin ? "Platform Operations" : "Acme Academy");
+                            var tenantId = User.FindFirst("TenantIdentifier")?.Value ?? (isSysAdmin ? "global" : "acme-corp");
 
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" id="userMenuDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <div class="rounded-circle bg-indigo-600 text-white d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 0.85rem; background-color: #4f46e5;">
+                            <!-- Mobile-only Tenant Display -->
+                            <div class="d-flex d-md-none align-items-center gap-2 px-2 py-1.5 mb-2 bg-dark bg-opacity-50 rounded text-white-50 small w-100">
+                                <i class="fa-solid @(isSysAdmin ? "fa-crown text-warning" : "fa-building text-info")"></i>
+                                <span class="text-white fw-semibold text-truncate">@tenantName</span>
+                                <code class="ms-auto">(@tenantId)</code>
+                            </div>
+
+                            <div class="dropdown w-100 w-xl-auto">
+                                <button class="user-menu-btn d-flex align-items-center gap-2 w-100" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <div class="user-avatar-circle">
                                         @(fullName?.Substring(0, 1).ToUpper() ?? "U")
                                     </div>
-                                    <div class="text-start d-none d-sm-block">
-                                        <div class="fw-semibold text-white" style="font-size: 0.85rem; line-height: 1.1;">@fullName</div>
-                                        <div class="text-white-50" style="font-size: 0.72rem;">@role &bull; <code>@userCode</code></div>
+                                    <div class="text-start d-none d-sm-block text-truncate" style="max-width: 140px;">
+                                        <div class="user-name text-truncate">@fullName</div>
+                                        <div class="user-sub text-truncate">@role</div>
                                     </div>
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2" aria-labelledby="userMenuDropdown" style="min-width: 220px; border-radius: 10px;">
-                                    <li class="px-3 py-2 border-bottom">
-                                        <div class="fw-bold text-dark">@fullName</div>
-                                        <div class="text-muted small">@User.FindFirst(ClaimTypes.Email)?.Value</div>
-                                        <span class="badge rounded-pill mt-1 @(role == "TenantAdmin" ? "badge-tenant-admin" : role == "Instructor" ? "badge-instructor" : role == "Proctor" ? "badge-proctor" : "badge-candidate")">@role</span>
+                                    <i class="fa-solid fa-chevron-down ms-1 user-caret"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 py-2 mt-2 dropdown-menu-dark" aria-labelledby="userMenuDropdown" style="min-width: 240px; border-radius: 12px; background-color: #1e293b; border: 1px solid rgba(255,255,255,0.1) !important;">
+                                    <li class="px-3 py-2 border-bottom border-secondary border-opacity-25">
+                                        <div class="fw-bold text-white text-truncate">@fullName</div>
+                                        <div class="text-white-50 small text-truncate">@User.FindFirst(ClaimTypes.Email)?.Value</div>
+                                        <div class="d-flex align-items-center gap-1 mt-1">
+                                            <span class="badge rounded-pill @(role == "TenantAdmin" ? "bg-danger" : role == "Instructor" ? "bg-primary" : role == "Proctor" ? "bg-warning text-dark" : "bg-success")" style="font-size: 0.7rem;">@role</span>
+                                            <code class="text-white-50 small">@userCode</code>
+                                        </div>
                                     </li>
+                                    @if (User.IsInRole("SystemAdmin") || User.FindFirst("IsSystemAdmin")?.Value == "true")
+                                    {
+                                        <li>
+                                            <a class="dropdown-item py-2 small d-flex align-items-center gap-2 text-warning" asp-controller="Admin" asp-action="Index">
+                                                <i class="fa-solid fa-crown"></i>
+                                                <span>SuperAdmin Console</span>
+                                            </a>
+                                        </li>
+                                    }
                                     <li>
-                                        <a class="dropdown-item py-2 small" asp-controller="Dashboard" asp-action="Index">
-                                            <i class="fa-solid fa-gauge me-2 text-primary"></i> Workspace Home
+                                        <a class="dropdown-item py-2 small d-flex align-items-center gap-2" asp-controller="Dashboard" asp-action="Index">
+                                            <i class="fa-solid fa-gauge text-primary"></i>
+                                            <span>Workspace Home</span>
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item py-2 small" asp-controller="Dashboard" asp-action="Architecture">
-                                            <i class="fa-solid fa-code me-2 text-info"></i> SaaS Architecture Spec
+                                        <a class="dropdown-item py-2 small d-flex align-items-center gap-2" asp-controller="Exam" asp-action="Index">
+                                            <i class="fa-solid fa-file-signature text-success"></i>
+                                            <span>Assessments</span>
                                         </a>
                                     </li>
-                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item py-2 small d-flex align-items-center gap-2" asp-controller="Dashboard" asp-action="Architecture">
+                                            <i class="fa-solid fa-layer-group text-info"></i>
+                                            <span>Architecture Spec</span>
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider border-secondary border-opacity-25"></li>
                                     <li>
                                         <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline w-100">
-                                            <button type="submit" class="dropdown-item py-2 small text-danger fw-semibold">
-                                                <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> Sign Out
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="dropdown-item py-2 small text-danger fw-semibold d-flex align-items-center gap-2">
+                                                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                                                <span>Sign Out</span>
                                             </button>
                                         </form>
                                     </li>
                                 </ul>
-                            </li>
+                            </div>
                         }
                         else
                         {
-                            <li class="nav-item">
-                                <a class="btn btn-sm btn-brand-primary px-3 py-1.5" asp-controller="Account" asp-action="Login">
-                                    <i class="fa-solid fa-lock me-1"></i> Sign In
-                                </a>
-                            </li>
+                            <a class="btn btn-sm btn-brand-primary px-3.5 py-1.5 fw-semibold d-inline-flex align-items-center gap-2 shadow-sm" asp-controller="Account" asp-action="Login">
+                                <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                                <span>Sign In</span>
+                            </a>
                         }
-                    </ul>
+                    </div>
                 </div>
             </div>
         </nav>
