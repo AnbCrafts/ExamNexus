@@ -64,8 +64,9 @@ public class AccountController : Controller
         }
 
         // 1. Resolve Tenant
+        var tenantSlug = (model.TenantIdentifier ?? string.Empty).Trim().ToLowerInvariant();
         var tenant = await _dbContext.Tenants
-            .FirstOrDefaultAsync(t => t.Identifier == model.TenantIdentifier.Trim().ToLowerInvariant() && t.IsActive);
+            .FirstOrDefaultAsync(t => t.Identifier.ToLower() == tenantSlug && t.IsActive);
 
         if (tenant == null)
         {
@@ -73,15 +74,14 @@ public class AccountController : Controller
             return View(model);
         }
 
-        // 2. Resolve User within Tenant
-        var user = await _userManager.Users
-            .Include(u => u.Tenant)
-            .FirstOrDefaultAsync(u => (u.Email == model.UsernameOrEmail || u.UserName == model.UsernameOrEmail) &&
-                                      (u.TenantId == tenant.Id || u.TenantId == null));
+        // 2. Resolve User within Tenant (supports case-insensitive email or username)
+        var inputIdentifier = (model.UsernameOrEmail ?? string.Empty).Trim();
+        var user = await _userManager.FindByEmailAsync(inputIdentifier)
+                   ?? await _userManager.FindByNameAsync(inputIdentifier);
 
-        if (user == null || !user.IsActive)
+        if (user == null || !user.IsActive || (user.TenantId.HasValue && user.TenantId.Value != tenant.Id))
         {
-            ModelState.AddModelError(string.Empty, "Invalid credentials or account disabled in this organization.");
+            ModelState.AddModelError(string.Empty, "Invalid credentials or account does not belong to this organization.");
             return View(model);
         }
 
@@ -92,6 +92,8 @@ public class AccountController : Controller
 
         if (result.Succeeded)
         {
+            await _userManager.ResetAccessFailedCountAsync(user);
+
             // Store Tenant Claims in the Cookie
             var claims = new List<Claim>
             {

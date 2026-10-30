@@ -7,6 +7,8 @@ namespace ExamNexus.Infrastructure.Data;
 
 public static class DbInitializer
 {
+    private const string DefaultDemoPassword = "P@ssword123!";
+
     public static async Task SeedDatabaseAsync(
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
@@ -58,93 +60,62 @@ public static class DbInitializer
             }
         }
 
-        // 3. Seed Users for Acme Corp
-        var adminEmail = "admin@acme.com";
-        var adminUser = await userManager.FindByEmailAsync(adminEmail);
-        if (adminUser == null)
-        {
-            adminUser = new ApplicationUser
-            {
-                UserName = adminEmail,
-                Email = adminEmail,
-                EmailConfirmed = true,
-                FirstName = "Marcus",
-                LastName = "Vance",
-                UserCode = "ADM-001",
-                TenantId = tenantAcmeId,
-                IsActive = true
-            };
-            if ((await userManager.CreateAsync(adminUser, "Admin@123!")).Succeeded)
-            {
-                await userManager.AddToRoleAsync(adminUser, "TenantAdmin");
-            }
-        }
+        // 3. Seed / Ensure Users for Acme Corp
+        await EnsureUserAsync(
+            userManager,
+            email: "admin@acme.com",
+            password: DefaultDemoPassword,
+            firstName: "Marcus",
+            lastName: "Vance",
+            userCode: "ADM-001",
+            tenantId: tenantAcmeId,
+            roleName: "TenantAdmin");
 
-        var instructorEmail = "instructor@acme.com";
-        var instructorUser = await userManager.FindByEmailAsync(instructorEmail);
-        if (instructorUser == null)
-        {
-            instructorUser = new ApplicationUser
-            {
-                UserName = instructorEmail,
-                Email = instructorEmail,
-                EmailConfirmed = true,
-                FirstName = "Dr. Aris",
-                LastName = "Thorne",
-                UserCode = "INS-101",
-                TenantId = tenantAcmeId,
-                IsActive = true
-            };
-            if ((await userManager.CreateAsync(instructorUser, "Instructor@123!")).Succeeded)
-            {
-                await userManager.AddToRoleAsync(instructorUser, "Instructor");
-            }
-        }
+        await EnsureUserAsync(
+            userManager,
+            email: "instructor@acme.com",
+            password: DefaultDemoPassword,
+            firstName: "Dr. Aris",
+            lastName: "Thorne",
+            userCode: "INS-101",
+            tenantId: tenantAcmeId,
+            roleName: "Instructor");
 
-        var proctorEmail = "proctor@acme.com";
-        var proctorUser = await userManager.FindByEmailAsync(proctorEmail);
-        if (proctorUser == null)
-        {
-            proctorUser = new ApplicationUser
-            {
-                UserName = proctorEmail,
-                Email = proctorEmail,
-                EmailConfirmed = true,
-                FirstName = "Sarah",
-                LastName = "Lin",
-                UserCode = "PRO-201",
-                TenantId = tenantAcmeId,
-                IsActive = true
-            };
-            if ((await userManager.CreateAsync(proctorUser, "Proctor@123!")).Succeeded)
-            {
-                await userManager.AddToRoleAsync(proctorUser, "Proctor");
-            }
-        }
+        await EnsureUserAsync(
+            userManager,
+            email: "proctor@acme.com",
+            password: DefaultDemoPassword,
+            firstName: "Sarah",
+            lastName: "Lin",
+            userCode: "PRO-201",
+            tenantId: tenantAcmeId,
+            roleName: "Proctor");
 
-        var studentEmail = "student@acme.com";
-        var studentUser = await userManager.FindByEmailAsync(studentEmail);
-        if (studentUser == null)
-        {
-            studentUser = new ApplicationUser
-            {
-                UserName = studentEmail,
-                Email = studentEmail,
-                EmailConfirmed = true,
-                FirstName = "Alex",
-                LastName = "Rivera",
-                UserCode = "STD-901",
-                TenantId = tenantAcmeId,
-                IsActive = true
-            };
-            if ((await userManager.CreateAsync(studentUser, "Student@123!")).Succeeded)
-            {
-                await userManager.AddToRoleAsync(studentUser, "Candidate");
-            }
-        }
+        await EnsureUserAsync(
+            userManager,
+            email: "student@acme.com",
+            password: DefaultDemoPassword,
+            firstName: "Alex",
+            lastName: "Rivera",
+            userCode: "STD-901",
+            tenantId: tenantAcmeId,
+            roleName: "Candidate");
 
-        // 4. Seed Course, Question Bank, Questions, and Options (for Acme Corp)
+        // 4. Seed User for Apex University (Isolated Tenant)
+        await EnsureUserAsync(
+            userManager,
+            email: "admin@apex.edu",
+            password: DefaultDemoPassword,
+            firstName: "Dean",
+            lastName: "Hawthorne",
+            userCode: "APX-001",
+            tenantId: tenantApexId,
+            roleName: "TenantAdmin");
+
+        // 5. Seed Course, Question Bank, Questions, and Options (for Acme Corp)
+        var instructorUser = await userManager.FindByEmailAsync("instructor@acme.com");
         var courseId = Guid.Parse("A1111111-1111-1111-1111-111111111111");
+
         if (!await context.Courses.IgnoreQueryFilters().AnyAsync(c => c.Id == courseId) && instructorUser != null)
         {
             var course = new Course
@@ -240,7 +211,7 @@ public static class DbInitializer
             await context.Questions.AddRangeAsync(q1, q2, q3, q4);
             await context.SaveChangesAsync();
 
-            // 5. Seed Exam linked to the 4 questions
+            // 6. Seed Exam linked to the 4 questions
             var examId = Guid.Parse("E1111111-1111-1111-1111-111111111111");
             var exam = new Exam
             {
@@ -264,6 +235,59 @@ public static class DbInitializer
 
             await context.Exams.AddAsync(exam);
             await context.SaveChangesAsync();
+        }
+    }
+
+    private static async Task EnsureUserAsync(
+        UserManager<ApplicationUser> userManager,
+        string email,
+        string password,
+        string firstName,
+        string lastName,
+        string userCode,
+        Guid tenantId,
+        string roleName)
+    {
+        var user = await userManager.FindByEmailAsync(email);
+        if (user == null)
+        {
+            user = new ApplicationUser
+            {
+                UserName = email,
+                Email = email,
+                EmailConfirmed = true,
+                FirstName = firstName,
+                LastName = lastName,
+                UserCode = userCode,
+                TenantId = tenantId,
+                IsActive = true
+            };
+            var createResult = await userManager.CreateAsync(user, password);
+            if (createResult.Succeeded)
+            {
+                await userManager.AddToRoleAsync(user, roleName);
+            }
+        }
+        else
+        {
+            // Reset lockout if previous failed attempts locked the user
+            if (await userManager.IsLockedOutAsync(user))
+            {
+                await userManager.SetLockoutEndDateAsync(user, null);
+                await userManager.ResetAccessFailedCountAsync(user);
+            }
+
+            // Sync password to DefaultDemoPassword so 1-click test credentials always work
+            if (!await userManager.CheckPasswordAsync(user, password))
+            {
+                var token = await userManager.GeneratePasswordResetTokenAsync(user);
+                await userManager.ResetPasswordAsync(user, token, password);
+            }
+
+            if (!await userManager.IsInRoleAsync(user, roleName))
+            {
+                await userManager.AddToRoleAsync(user, roleName);
+            }
         }
     }
 }

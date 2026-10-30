@@ -126,10 +126,9 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseTenantResolution();
 app.UseSession();
-
 app.UseAuthentication();
+app.UseTenantResolution();
 app.UseAuthorization();
 
 // Route Mappings
