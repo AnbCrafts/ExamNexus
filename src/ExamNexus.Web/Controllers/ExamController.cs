@@ -340,4 +340,259 @@ public class ExamController : Controller
 
         return View(dto);
     }
+
+    [HttpGet]
+    [Authorize(Policy = "InstructorOrAdmin")]
+    public async Task<IActionResult> Create()
+    {
+        var tenant = await _context.Tenants.FirstOrDefaultAsync(t => t.Id == _tenantService.CurrentTenantId);
+        var examCount = await _context.Exams.CountAsync();
+        var maxAllowed = tenant?.PlanMaxExams ?? 5;
+
+        ViewBag.ExamCount = examCount;
+        ViewBag.MaxAllowed = maxAllowed;
+        ViewBag.PlanName = tenant?.Plan.ToString() ?? "Professional";
+        ViewBag.CanCreate = examCount < maxAllowed;
+        ViewBag.Courses = await _context.Courses.OrderBy(c => c.Title).ToListAsync();
+
+        var defaultModel = new CreateExamRequestDto
+        {
+            CustomAccessCode = $"NX-{Random.Shared.Next(1000, 9999)}",
+            DurationMinutes = 30,
+            PassingScorePercent = 70.00m,
+            MaxTabSwitchesAllowed = 3,
+            Questions = new List<CreateQuestionItemDto>
+            {
+                new()
+                {
+                    Text = "What is the primary benefit of deploying applications across multiple availability zones?",
+                    Points = 10,
+                    CorrectOptionIndex = 1,
+                    OptionA = "Reduced computational licensing cost",
+                    OptionB = "High availability and protection against datacenter failures",
+                    OptionC = "Elimination of external identity providers",
+                    OptionD = "Local database storage caching"
+                },
+                new()
+                {
+                    Text = "Which security architecture operates on the principle of 'never trust, always explicitly verify'?",
+                    Points = 10,
+                    CorrectOptionIndex = 2,
+                    OptionA = "Perimeter Defense Only",
+                    OptionB = "Implicit Network Trust",
+                    OptionC = "Zero Trust Security Architecture",
+                    OptionD = "Static Firewall Access Control"
+                }
+            }
+        };
+
+        return View(defaultModel);
+    }
+
+    [HttpPost]
+    [Authorize(Policy = "InstructorOrAdmin")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(CreateExamRequestDto model)
+    {
+        var tenant = await _context.Tenants.FirstOrDefaultAsync(t => t.Id == _tenantService.CurrentTenantId);
+        var examCount = await _context.Exams.CountAsync();
+        var maxAllowed = tenant?.PlanMaxExams ?? 5;
+
+        if (examCount >= maxAllowed)
+        {
+            ModelState.AddModelError(string.Empty, $"Subscription limit reached! Your {tenant?.Plan} plan allows up to {maxAllowed} assessments. Please upgrade your subscription to create additional exams.");
+            ViewBag.ExamCount = examCount;
+            ViewBag.MaxAllowed = maxAllowed;
+            ViewBag.PlanName = tenant?.Plan.ToString() ?? "Professional";
+            ViewBag.CanCreate = false;
+            ViewBag.Courses = await _context.Courses.OrderBy(c => c.Title).ToListAsync();
+            return View(model);
+        }
+
+        if (model.Questions == null || model.Questions.Count == 0)
+        {
+            ModelState.AddModelError("Questions", "You must provide at least one question for this assessment.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            ViewBag.ExamCount = examCount;
+            ViewBag.MaxAllowed = maxAllowed;
+            ViewBag.PlanName = tenant?.Plan.ToString() ?? "Professional";
+            ViewBag.CanCreate = true;
+            ViewBag.Courses = await _context.Courses.OrderBy(c => c.Title).ToListAsync();
+            return View(model);
+        }
+
+        // 1. Resolve Course
+        Guid courseId;
+        if (model.CourseId.HasValue && model.CourseId.Value != Guid.Empty)
+        {
+            courseId = model.CourseId.Value;
+        }
+        else
+        {
+            var courseCode = string.IsNullOrWhiteSpace(model.NewCourseCode) ? "CRS-GEN" : model.NewCourseCode.Trim().ToUpperInvariant();
+            var courseTitle = string.IsNullOrWhiteSpace(model.NewCourseTitle) ? $"{model.Title} Curriculum" : model.NewCourseTitle.Trim();
+
+            var newCourse = new Course
+            {
+                Id = Guid.NewGuid(),
+                TenantId = _tenantService.CurrentTenantId ?? Guid.Empty,
+                Code = courseCode,
+                Title = courseTitle,
+                Description = "Custom assessment curriculum container",
+                CreatedByInstructorId = _currentUserService.UserId ?? string.Empty
+            };
+            _context.Courses.Add(newCourse);
+            courseId = newCourse.Id;
+        }
+
+        // 2. Create QuestionBank
+        var bank = new QuestionBank
+        {
+            Id = Guid.NewGuid(),
+            TenantId = _tenantService.CurrentTenantId ?? Guid.Empty,
+            CourseId = courseId,
+            Title = $"{model.Title} Question Pool",
+            Description = "Automated pool generated with assessment"
+        };
+        _context.QuestionBanks.Add(bank);
+
+        // 3. Resolve AccessCode
+        var accessCode = string.IsNullOrWhiteSpace(model.CustomAccessCode)
+            ? $"NX-{Random.Shared.Next(1000, 9999)}"
+            : model.CustomAccessCode.Trim().ToUpperInvariant();
+
+        // 4. Create Exam
+        var exam = new Exam
+        {
+            Id = Guid.NewGuid(),
+            TenantId = _tenantService.CurrentTenantId ?? Guid.Empty,
+            CourseId = courseId,
+            Title = model.Title.Trim(),
+            AccessCode = accessCode,
+            DurationMinutes = model.DurationMinutes,
+            PassingScorePercent = model.PassingScorePercent,
+            MaxTabSwitchesAllowed = model.MaxTabSwitchesAllowed,
+            IsActive = true,
+            CreatedById = _currentUserService.UserId ?? string.Empty,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        decimal totalMarks = 0;
+        int orderIndex = 1;
+
+        foreach (var qDto in model.Questions)
+        {
+            var question = new Question
+            {
+                Id = Guid.NewGuid(),
+                TenantId = exam.TenantId,
+                BankId = bank.Id,
+                Text = qDto.Text.Trim(),
+                Points = qDto.Points,
+                Explanation = qDto.Explanation?.Trim(),
+                QuestionType = QuestionType.MultipleChoice
+            };
+
+            var optionsText = new[] { qDto.OptionA, qDto.OptionB, qDto.OptionC, qDto.OptionD };
+            for (int i = 0; i < optionsText.Length; i++)
+            {
+                if (string.IsNullOrWhiteSpace(optionsText[i])) continue;
+                question.Options.Add(new QuestionOption
+                {
+                    Id = Guid.NewGuid(),
+                    QuestionId = question.Id,
+                    OptionText = optionsText[i].Trim(),
+                    IsCorrect = (i == qDto.CorrectOptionIndex),
+                    OrderIndex = i + 1
+                });
+            }
+
+            _context.Questions.Add(question);
+
+            exam.ExamQuestions.Add(new ExamQuestion
+            {
+                Id = Guid.NewGuid(),
+                TenantId = exam.TenantId,
+                ExamId = exam.Id,
+                QuestionId = question.Id,
+                OrderIndex = orderIndex++
+            });
+
+            totalMarks += qDto.Points;
+        }
+
+        exam.TotalMarks = totalMarks > 0 ? totalMarks : 100.00m;
+        _context.Exams.Add(exam);
+
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"Assessment '{exam.Title}' created successfully! Share link is now live.";
+        return RedirectToAction(nameof(Share), new { id = exam.Id });
+    }
+
+    [HttpGet]
+    [Authorize(Policy = "InstructorOrAdmin")]
+    public async Task<IActionResult> Share(Guid id)
+    {
+        var exam = await _context.Exams
+            .Include(e => e.Course)
+            .Include(e => e.ExamQuestions)
+            .FirstOrDefaultAsync(e => e.Id == id);
+
+        if (exam == null) return NotFound();
+
+        var tenant = await _context.Tenants.FirstOrDefaultAsync(t => t.Id == _tenantService.CurrentTenantId);
+        var examCount = await _context.Exams.CountAsync();
+
+        var dto = new ExamCreatedSuccessDto
+        {
+            ExamId = exam.Id,
+            Title = exam.Title,
+            AccessCode = exam.AccessCode,
+            ShareableUrl = $"{Request.Scheme}://{Request.Host}/Exam/Join?code={exam.AccessCode}",
+            DurationMinutes = exam.DurationMinutes,
+            TotalQuestions = exam.ExamQuestions.Count,
+            TotalMarks = exam.TotalMarks,
+            TenantName = tenant?.Name ?? "Acme Academy",
+            ExamsCreatedCount = examCount,
+            MaxExamsAllowed = tenant?.PlanMaxExams ?? 5
+        };
+
+        return View(dto);
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<IActionResult> Join(string? code)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            return RedirectToAction(nameof(Index));
+        }
+
+        code = code.Trim().ToUpperInvariant();
+
+        // If not authenticated, send to login with returnUrl
+        if (User.Identity?.IsAuthenticated != true)
+        {
+            return RedirectToAction("Login", "Account", new { returnUrl = $"/Exam/Join?code={code}" });
+        }
+
+        var exam = await _context.Exams
+            .Include(e => e.Course)
+            .Include(e => e.ExamQuestions)
+            .FirstOrDefaultAsync(e => e.AccessCode == code && e.IsActive);
+
+        if (exam == null)
+        {
+            TempData["ErrorMessage"] = $"No active assessment found matching access code '{code}'.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        ViewBag.AccessCode = code;
+        return View("JoinConfirm", exam);
+    }
 }

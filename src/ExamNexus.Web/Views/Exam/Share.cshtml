@@ -1,0 +1,119 @@
+@model ExamCreatedSuccessDto
+@{
+    ViewData["Title"] = "Assessment Published & Shareable Link";
+}
+
+<div class="row justify-content-center py-4">
+    <div class="col-lg-8 col-xl-7">
+        <div class="card card-enterprise overflow-hidden border-0 shadow-lg" style="border-radius: 16px;">
+            <!-- Header Banner -->
+            <div class="p-4 p-md-5 text-center text-white" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);">
+                <div class="d-inline-flex align-items-center justify-content-center bg-white bg-opacity-20 rounded-circle mb-3" style="width: 72px; height: 72px;">
+                    <i class="fa-solid fa-bullhorn text-warning fs-2"></i>
+                </div>
+                <h3 class="fw-bold mb-1 text-white">Assessment Successfully Published!</h3>
+                <p class="text-white-50 mb-0 small">
+                    Organization: <strong>@Model.TenantName</strong> &bull; Quota Used: <strong>@Model.ExamsCreatedCount / @(Model.MaxExamsAllowed >= 9999 ? "Unlimited" : Model.MaxExamsAllowed.ToString())</strong>
+                </p>
+            </div>
+
+            <!-- Body: Shareable Links & Access Codes -->
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <h4 class="fw-bold text-dark mb-1">@Model.Title</h4>
+                    <div class="text-muted small">
+                        <span><i class="fa-regular fa-clock me-1 text-primary"></i> @Model.DurationMinutes Minutes</span> &bull;
+                        <span><i class="fa-solid fa-list-check me-1 text-info"></i> @Model.TotalQuestions Questions</span> &bull;
+                        <span><i class="fa-solid fa-star me-1 text-warning"></i> @Model.TotalMarks Points</span>
+                    </div>
+                </div>
+
+                <!-- Direct Shareable Candidate Link Box -->
+                <div class="p-3 bg-light rounded-3 border mb-4">
+                    <label class="form-label small fw-bold text-secondary mb-1">
+                        <i class="fa-solid fa-link text-primary me-1"></i> Direct Candidate Join Link
+                    </label>
+                    <div class="input-group">
+                        <input type="text" id="shareableLinkInput" class="form-control font-monospace text-dark bg-white" value="@Model.ShareableUrl" readonly />
+                        <button type="button" class="btn btn-brand-primary" onclick="copyLink()">
+                            <i class="fa-regular fa-copy me-1"></i> Copy Link
+                        </button>
+                    </div>
+                    <div class="form-text small mt-1">
+                        Send this link to your candidates or students. They can click it to immediately enter this assessment.
+                    </div>
+                </div>
+
+                <!-- Access Code Badge Box -->
+                <div class="row g-3 mb-4 text-center">
+                    <div class="col-sm-6">
+                        <div class="p-3 border rounded-3 bg-white h-100">
+                            <div class="text-muted small fw-semibold">ASSESSMENT PASSCODE</div>
+                            <div class="fs-3 fw-bold text-dark font-monospace mt-1 tracking-wider" id="accessCodeText">@Model.AccessCode</div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="copyCode()">
+                                <i class="fa-solid fa-key me-1"></i> Copy Passcode
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="p-3 border rounded-3 bg-white h-100">
+                            <div class="text-muted small fw-semibold">LIVE PROCTORING</div>
+                            <div class="fs-3 fw-bold text-success mt-1">
+                                <span class="signalr-live-indicator me-1"></span> Active
+                            </div>
+                            <div class="text-muted small mt-2">WebSocket stream ready on <code>/hubs/proctor</code></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Navigation Buttons -->
+                <div class="d-flex flex-column flex-sm-row justify-content-between gap-2 pt-2 border-top">
+                    <a asp-controller="Exam" asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="fa-solid fa-list me-1"></i> Assessment Catalog
+                    </a>
+                    <div class="d-flex gap-2">
+                        <a asp-controller="Exam" asp-action="Join" asp-route-code="@Model.AccessCode" class="btn btn-outline-primary" target="_blank">
+                            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Test Join Link
+                        </a>
+                        <a asp-controller="Proctor" asp-action="Index" class="btn btn-warning text-dark fw-bold">
+                            <i class="fa-solid fa-shield-halved me-1"></i> Proctor Console
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="copyToast" class="toast align-items-center text-bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toastMessage">
+                Copied to clipboard!
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showToast(msg) {
+            document.getElementById('toastMessage').innerText = msg;
+            const toast = new bootstrap.Toast(document.getElementById('copyToast'));
+            toast.show();
+        }
+
+        function copyLink() {
+            const input = document.getElementById('shareableLinkInput');
+            navigator.clipboard.writeText(input.value);
+            showToast("Shareable Candidate Join Link copied to clipboard!");
+        }
+
+        function copyCode() {
+            const code = document.getElementById('accessCodeText').innerText;
+            navigator.clipboard.writeText(code);
+            showToast(`Assessment passcode '${code}' copied to clipboard!`);
+        }
+    </script>
+}

@@ -1,0 +1,358 @@
+@model CreateExamRequestDto
+@{
+    ViewData["Title"] = "Create Assessment";
+    int examCount = ViewBag.ExamCount ?? 0;
+    int maxAllowed = ViewBag.MaxAllowed ?? 5;
+    string planName = ViewBag.PlanName as string ?? "Professional";
+    bool canCreate = ViewBag.CanCreate ?? true;
+    var courses = ViewBag.Courses as List<Course> ?? new List<Course>();
+    double usagePercent = maxAllowed > 0 ? Math.Min(100, Math.Round((double)examCount / maxAllowed * 100, 1)) : 0;
+}
+
+<!-- Quota & Subscription Status Banner -->
+<div class="card card-enterprise p-4 mb-4 border-0" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: #ffffff;">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-indigo-500 bg-opacity-25 text-indigo-200 border border-indigo-400 border-opacity-30">
+                    <i class="fa-solid fa-crown text-warning me-1"></i> @planName Plan Subscription
+                </span>
+                @if (canCreate)
+                {
+                    <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-30">
+                        <i class="fa-solid fa-circle-check me-1"></i> Quota Available
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-30">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i> Quota Limit Reached
+                    </span>
+                }
+            </div>
+            <h3 class="fw-bold text-white mb-0">Create New Proctored Assessment</h3>
+            <p class="text-white-50 mb-0 small mt-1">Configure timed assessment rules, anti-cheat limits, and question banks.</p>
+        </div>
+
+        <!-- Quota Progress Widget -->
+        <div class="bg-black bg-opacity-25 p-3 rounded-3 text-md-end" style="min-width: 260px;">
+            <div class="d-flex justify-content-between text-white-50 small mb-1">
+                <span>Assessment Quota</span>
+                <strong class="text-white">@examCount / @(maxAllowed >= 9999 ? "Unlimited" : maxAllowed.ToString())</strong>
+            </div>
+            <div class="progress bg-white bg-opacity-20" style="height: 8px;">
+                <div class="progress-bar @(usagePercent >= 100 ? "bg-danger" : usagePercent >= 80 ? "bg-warning" : "bg-info")" 
+                     role="progressbar" 
+                     style="width: @(maxAllowed >= 9999 ? "10%" : usagePercent + "%");"></div>
+            </div>
+            <div class="text-white-50 small mt-1" style="font-size: 0.72rem;">
+                @(canCreate ? $"{maxAllowed - examCount} slots remaining in your plan" : "Upgrade to Enterprise for unlimited slots")
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (!canCreate)
+{
+    <div class="alert alert-danger p-4 rounded-3 border-0 shadow-sm mb-4">
+        <div class="d-flex align-items-start gap-3">
+            <i class="fa-solid fa-circle-exclamation fs-2 text-danger"></i>
+            <div>
+                <h5 class="fw-bold text-danger mb-1">Assessment Creation Locked</h5>
+                <p class="mb-2">Your organization has reached its maximum subscription limit of <strong>@maxAllowed assessments</strong> under the <strong>@planName Plan</strong>.</p>
+                <a href="mailto:sales@examnexus.com?subject=Upgrade Plan Request" class="btn btn-sm btn-danger fw-bold">
+                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Request Enterprise Plan Upgrade
+                </a>
+            </div>
+        </div>
+    </div>
+}
+
+<form asp-action="Create" method="post" id="examCreateForm">
+    @Html.AntiForgeryToken()
+
+    <div class="row g-4">
+        <!-- Left Column: Assessment Metadata -->
+        <div class="col-lg-5">
+            <div class="card card-enterprise mb-4 sticky-top" style="top: 85px;">
+                <div class="card-header bg-white py-3 px-4">
+                    <h5 class="fw-bold text-dark mb-0">
+                        <i class="fa-solid fa-sliders text-primary me-2"></i> Assessment Settings
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty]?.Errors.Count > 0)
+                    {
+                        <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3 border-0">
+                            @foreach (var err in ViewData.ModelState[string.Empty]!.Errors)
+                            {
+                                <div><i class="fa-solid fa-circle-exclamation me-1"></i> @err.ErrorMessage</div>
+                            }
+                        </div>
+                    }
+
+                    <!-- Assessment Title -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">
+                            Assessment Title <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="Title" class="form-control" placeholder="e.g. Distributed Cloud Systems Final" required />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Course / Curriculum -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">Course / Curriculum</label>
+                        <select asp-for="CourseId" class="form-select mb-2" id="courseSelect">
+                            <option value="">-- Create New Quick Course Container --</option>
+                            @foreach (var c in courses)
+                            {
+                                <option value="@c.Id">@c.Code - @c.Title</option>
+                            }
+                        </select>
+                        <div id="newCourseBox" class="p-3 bg-light rounded-3">
+                            <div class="mb-2">
+                                <label class="form-label small text-muted">New Course Code</label>
+                                <input asp-for="NewCourseCode" class="form-control form-control-sm" placeholder="e.g. CS-401" />
+                            </div>
+                            <div>
+                                <label class="form-label small text-muted">New Course Title</label>
+                                <input asp-for="NewCourseTitle" class="form-control form-control-sm" placeholder="e.g. Cloud Computing & DevOps" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-secondary">
+                                <i class="fa-regular fa-clock text-primary me-1"></i> Duration (Mins)
+                            </label>
+                            <input asp-for="DurationMinutes" type="number" class="form-control" min="5" max="360" required />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-secondary">
+                                <i class="fa-solid fa-percent text-success me-1"></i> Pass Score %
+                            </label>
+                            <input asp-for="PassingScorePercent" type="number" step="1" class="form-control" min="10" max="100" required />
+                        </div>
+                    </div>
+
+                    <!-- Anti-Cheat Threshold -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">
+                            <i class="fa-solid fa-shield-halved text-warning me-1"></i> Max Allowable Tab Switches
+                        </label>
+                        <input asp-for="MaxTabSwitchesAllowed" type="number" class="form-control" min="1" max="10" required />
+                        <div class="form-text small">Candidates exceeding this limit are auto-flagged for cheating in the Proctor stream.</div>
+                    </div>
+
+                    <!-- Access Passcode -->
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-secondary">
+                            <i class="fa-solid fa-key text-info me-1"></i> Custom Access Passcode
+                        </label>
+                        <input asp-for="CustomAccessCode" class="form-control font-monospace fw-semibold" placeholder="e.g. NX-9921" />
+                        <div class="form-text small">Auto-generated if left blank. Used by candidates to join or via direct link.</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-brand-primary w-100 py-2.5 fw-bold" @(canCreate ? "" : "disabled")>
+                        <i class="fa-solid fa-paper-plane me-1"></i> Publish Assessment &amp; Generate Link
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Interactive Question & Answer Builder -->
+        <div class="col-lg-7">
+            <div class="card card-enterprise mb-4">
+                <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-bold text-dark mb-0">
+                            <i class="fa-solid fa-list-ol text-primary me-2"></i> Assessment Questions &amp; Answers
+                        </h5>
+                        <div class="text-muted small">Add multiple choice questions and mark the correct answer.</div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary fw-semibold" onclick="addQuestionCard()">
+                        <i class="fa-solid fa-plus me-1"></i> Add Question
+                    </button>
+                </div>
+
+                <div class="card-body p-4" id="questionsContainer">
+                    @for (int i = 0; i < Model.Questions.Count; i++)
+                    {
+                        var q = Model.Questions[i];
+                        <div class="card mb-4 border p-3 rounded-3 question-block" id="question_block_@i">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-primary bg-opacity-10 text-primary fw-bold q-num-badge">Question @(i + 1)</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="input-group input-group-sm" style="width: 140px;">
+                                        <span class="input-group-text">Pts</span>
+                                        <input type="number" name="Questions[@i].Points" class="form-control text-end" value="@q.Points" min="1" max="100" />
+                                    </div>
+                                    @if (i > 0)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeQuestionBlock(@i)">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Question Text -->
+                            <div class="mb-3">
+                                <textarea name="Questions[@i].Text" class="form-control" rows="2" placeholder="Enter question prompt..." required>@q.Text</textarea>
+                            </div>
+
+                            <!-- 4 Multiple Choice Options with Correct Answer Selector -->
+                            <label class="form-label small fw-bold text-secondary mb-1">
+                                Options (Select radio for the Correct Answer <i class="fa-solid fa-circle-check text-success"></i>)
+                            </label>
+                            
+                            <!-- Option A -->
+                            <div class="input-group mb-2">
+                                <div class="input-group-text bg-white">
+                                    <input type="radio" name="Questions[@i].CorrectOptionIndex" value="0" class="form-check-input mt-0" @(q.CorrectOptionIndex == 0 ? "checked" : "") title="Mark as correct answer" />
+                                    <span class="ms-1 fw-bold small text-muted">A</span>
+                                </div>
+                                <input type="text" name="Questions[@i].OptionA" class="form-control" placeholder="Option A text" value="@q.OptionA" required />
+                            </div>
+
+                            <!-- Option B -->
+                            <div class="input-group mb-2">
+                                <div class="input-group-text bg-white">
+                                    <input type="radio" name="Questions[@i].CorrectOptionIndex" value="1" class="form-check-input mt-0" @(q.CorrectOptionIndex == 1 ? "checked" : "") title="Mark as correct answer" />
+                                    <span class="ms-1 fw-bold small text-muted">B</span>
+                                </div>
+                                <input type="text" name="Questions[@i].OptionB" class="form-control" placeholder="Option B text" value="@q.OptionB" required />
+                            </div>
+
+                            <!-- Option C -->
+                            <div class="input-group mb-2">
+                                <div class="input-group-text bg-white">
+                                    <input type="radio" name="Questions[@i].CorrectOptionIndex" value="2" class="form-check-input mt-0" @(q.CorrectOptionIndex == 2 ? "checked" : "") title="Mark as correct answer" />
+                                    <span class="ms-1 fw-bold small text-muted">C</span>
+                                </div>
+                                <input type="text" name="Questions[@i].OptionC" class="form-control" placeholder="Option C text" value="@q.OptionC" />
+                            </div>
+
+                            <!-- Option D -->
+                            <div class="input-group mb-2">
+                                <div class="input-group-text bg-white">
+                                    <input type="radio" name="Questions[@i].CorrectOptionIndex" value="3" class="form-check-input mt-0" @(q.CorrectOptionIndex == 3 ? "checked" : "") title="Mark as correct answer" />
+                                    <span class="ms-1 fw-bold small text-muted">D</span>
+                                </div>
+                                <input type="text" name="Questions[@i].OptionD" class="form-control" placeholder="Option D text" value="@q.OptionD" />
+                            </div>
+
+                            <!-- Explanation -->
+                            <div class="mt-2">
+                                <input type="text" name="Questions[@i].Explanation" class="form-control form-control-sm text-muted" placeholder="Optional rationale / explanation for grading review" value="@q.Explanation" />
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="card-footer bg-light p-3 text-center">
+                    <button type="button" class="btn btn-outline-primary fw-semibold px-4" onclick="addQuestionCard()">
+                        <i class="fa-solid fa-circle-plus me-1"></i> Add Another Question
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        let questionCounter = @Model.Questions.Count;
+
+        function addQuestionCard() {
+            const index = questionCounter++;
+            const container = document.getElementById('questionsContainer');
+
+            const card = document.createElement('div');
+            card.className = 'card mb-4 border p-3 rounded-3 question-block';
+            card.id = `question_block_${index}`;
+
+            card.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="badge bg-primary bg-opacity-10 text-primary fw-bold q-num-badge">Question ${document.querySelectorAll('.question-block').length + 1}</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="input-group input-group-sm" style="width: 140px;">
+                            <span class="input-group-text">Pts</span>
+                            <input type="number" name="Questions[${index}].Points" class="form-control text-end" value="10" min="1" max="100" />
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeQuestionBlock(${index})">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <textarea name="Questions[${index}].Text" class="form-control" rows="2" placeholder="Enter question prompt..." required></textarea>
+                </div>
+                <label class="form-label small fw-bold text-secondary mb-1">
+                    Options (Select radio for the Correct Answer <i class="fa-solid fa-circle-check text-success"></i>)
+                </label>
+                <div class="input-group mb-2">
+                    <div class="input-group-text bg-white">
+                        <input type="radio" name="Questions[${index}].CorrectOptionIndex" value="0" class="form-check-input mt-0" checked title="Mark as correct answer" />
+                        <span class="ms-1 fw-bold small text-muted">A</span>
+                    </div>
+                    <input type="text" name="Questions[${index}].OptionA" class="form-control" placeholder="Option A text" required />
+                </div>
+                <div class="input-group mb-2">
+                    <div class="input-group-text bg-white">
+                        <input type="radio" name="Questions[${index}].CorrectOptionIndex" value="1" class="form-check-input mt-0" title="Mark as correct answer" />
+                        <span class="ms-1 fw-bold small text-muted">B</span>
+                    </div>
+                    <input type="text" name="Questions[${index}].OptionB" class="form-control" placeholder="Option B text" required />
+                </div>
+                <div class="input-group mb-2">
+                    <div class="input-group-text bg-white">
+                        <input type="radio" name="Questions[${index}].CorrectOptionIndex" value="2" class="form-check-input mt-0" title="Mark as correct answer" />
+                        <span class="ms-1 fw-bold small text-muted">C</span>
+                    </div>
+                    <input type="text" name="Questions[${index}].OptionC" class="form-control" placeholder="Option C text" />
+                </div>
+                <div class="input-group mb-2">
+                    <div class="input-group-text bg-white">
+                        <input type="radio" name="Questions[${index}].CorrectOptionIndex" value="3" class="form-check-input mt-0" title="Mark as correct answer" />
+                        <span class="ms-1 fw-bold small text-muted">D</span>
+                    </div>
+                    <input type="text" name="Questions[${index}].OptionD" class="form-control" placeholder="Option D text" />
+                </div>
+                <div class="mt-2">
+                    <input type="text" name="Questions[${index}].Explanation" class="form-control form-control-sm text-muted" placeholder="Optional rationale / explanation for grading review" />
+                </div>
+            `;
+
+            container.appendChild(card);
+            renumberQuestions();
+        }
+
+        function removeQuestionBlock(index) {
+            const el = document.getElementById(`question_block_${index}`);
+            if (el) {
+                el.remove();
+                renumberQuestions();
+            }
+        }
+
+        function renumberQuestions() {
+            const blocks = document.querySelectorAll('.question-block');
+            blocks.forEach((b, idx) => {
+                const badge = b.querySelector('.q-num-badge');
+                if (badge) badge.innerText = `Question ${idx + 1}`;
+            });
+        }
+
+        document.getElementById('courseSelect').addEventListener('change', function() {
+            const box = document.getElementById('newCourseBox');
+            if (this.value) {
+                box.classList.add('d-none');
+            } else {
+                box.classList.remove('d-none');
+            }
+        });
+    </script>
+}

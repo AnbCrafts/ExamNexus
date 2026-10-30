@@ -33,6 +33,9 @@
                 </a>
                 @if (role != "Candidate")
                 {
+                    <a asp-controller="Exam" asp-action="Create" class="btn btn-primary fw-bold px-3 py-2 shadow-sm text-white border-0" style="background: #4f46e5;">
+                        <i class="fa-solid fa-plus me-1"></i> Create Assessment
+                    </a>
                     <a asp-controller="Proctor" asp-action="Index" class="btn btn-warning fw-bold px-3 py-2 shadow-sm text-dark">
                         <i class="fa-solid fa-shield-halved me-1"></i> Proctor Console
                     </a>
@@ -246,7 +249,17 @@
                 <h5 class="fw-bold mb-0 text-dark">
                     <i class="fa-solid fa-list-check me-2 text-primary"></i> Available Assessments
                 </h5>
-                <span class="badge bg-light text-dark border">Tenant: @tenantIdentifier</span>
+                <div class="d-flex align-items-center gap-2">
+                    @if (role != "Candidate")
+                    {
+                        <a asp-controller="Exam" asp-action="Create" class="btn btn-sm btn-outline-primary fw-semibold">
+                            <i class="fa-solid fa-plus me-1"></i> New Assessment
+                        </a>
+                    }
+                    <span class="badge bg-light text-dark border">
+                        <i class="fa-solid fa-crown text-warning me-1"></i> @ViewBag.PlanName: @ViewBag.TotalExams / @(ViewBag.PlanMaxExams >= 9999 ? "Unlimited" : ViewBag.PlanMaxExams.ToString())
+                    </span>
+                </div>
             </div>
             <div class="card-body p-0">
                 <div class="list-group list-group-flush">

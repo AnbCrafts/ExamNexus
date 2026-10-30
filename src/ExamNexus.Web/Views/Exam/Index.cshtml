@@ -11,6 +11,12 @@
         <p class="text-muted mb-0">Select an assessment to begin. Ensure your webcam and stable network connection are ready.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
+        @if (User.IsInRole("TenantAdmin") || User.IsInRole("Instructor") || User.IsInRole("SystemAdmin"))
+        {
+            <a asp-action="Create" class="btn btn-brand-primary fw-bold px-3 py-2 shadow-sm">
+                <i class="fa-solid fa-plus me-1"></i> Create Assessment
+            </a>
+        }
         <span class="badge bg-light text-secondary border px-3 py-2">
             <i class="fa-solid fa-clock me-1 text-primary"></i> Timed Sessions
         </span>

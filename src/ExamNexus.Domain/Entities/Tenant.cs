@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using ExamNexus.Domain.Common;
 using ExamNexus.Domain.Enums;
 
@@ -11,6 +12,15 @@ public class Tenant : BaseEntity
     public int MaxCandidateSlots { get; set; } = 500;
     public string? BrandColorHex { get; set; } = "#2563eb";
     public bool IsActive { get; set; } = true;
+
+    [NotMapped]
+    public int PlanMaxExams => Plan switch
+    {
+        TenantPlan.Free => 2,
+        TenantPlan.Professional => 5,
+        TenantPlan.Enterprise => 9999,
+        _ => 5
+    };
 
     // Navigations
     public virtual ICollection<ApplicationUser> Users { get; set; } = new List<ApplicationUser>();

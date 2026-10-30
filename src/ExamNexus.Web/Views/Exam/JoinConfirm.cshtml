@@ -1,0 +1,50 @@
+@model Exam
+@{
+    ViewData["Title"] = "Join Assessment: " + Model.Title;
+    string accessCode = ViewBag.AccessCode as string ?? Model.AccessCode;
+}
+
+<div class="row justify-content-center py-5">
+    <div class="col-lg-7 col-xl-6">
+        <div class="card card-enterprise border-0 shadow-lg overflow-hidden" style="border-radius: 16px;">
+            <div class="p-4 p-md-5 text-white" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);">
+                <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-30 mb-2">
+                    <i class="fa-solid fa-lock-open me-1"></i> Passcode Verified
+                </span>
+                <h3 class="fw-bold text-white mb-1">@Model.Title</h3>
+                <div class="text-white-50 small">
+                    Course: <strong>@(Model.Course?.Code ?? "COURSE") &bull; @(Model.Course?.Title ?? "Curriculum")</strong>
+                </div>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                <div class="p-3 bg-light rounded-3 mb-4">
+                    <h6 class="fw-bold text-dark mb-2">
+                        <i class="fa-solid fa-circle-info text-primary me-1"></i> Assessment Instructions
+                    </h6>
+                    <ul class="small text-muted mb-0 ps-3">
+                        <li class="mb-1"><strong>Duration:</strong> You will have <strong>@Model.DurationMinutes minutes</strong> to complete all questions.</li>
+                        <li class="mb-1"><strong>Passing Grade:</strong> @Model.PassingScorePercent% score required to pass.</li>
+                        <li class="mb-1"><strong>Total Points:</strong> @Model.TotalMarks marks across @(Model.ExamQuestions?.Count ?? 0) questions.</li>
+                        <li class="mb-1"><strong>Anti-Cheat Active:</strong> Browser tab switches are tracked. Maximum allowed: <strong>@Model.MaxTabSwitchesAllowed switches</strong> before violation flagging.</li>
+                    </ul>
+                </div>
+
+                <form asp-action="Start" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ExamId" value="@Model.Id" />
+                    <input type="hidden" name="AccessCode" value="@accessCode" />
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-brand-primary btn-lg fw-bold py-3 shadow">
+                            <i class="fa-solid fa-arrow-right-to-bracket me-2"></i> Launch Assessment Session
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            Return to Assessment Catalog
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

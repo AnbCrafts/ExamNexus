@@ -28,6 +28,10 @@ public class DashboardController : Controller
         ViewBag.TenantName = _tenantService.CurrentTenantName ?? "Acme Academy";
         ViewBag.TenantIdentifier = _tenantService.CurrentTenantIdentifier ?? "acme-corp";
 
+        var tenant = await _context.Tenants.FirstOrDefaultAsync(t => t.Id == _tenantService.CurrentTenantId);
+        ViewBag.PlanName = tenant?.Plan.ToString() ?? "Professional";
+        ViewBag.PlanMaxExams = tenant?.PlanMaxExams ?? 5;
+
         // Global / Tenant Statistics
         ViewBag.TotalCourses = await _context.Courses.CountAsync();
         ViewBag.TotalExams = await _context.Exams.CountAsync();
