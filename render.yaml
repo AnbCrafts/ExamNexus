@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: examnexus
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: master
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_HTTP_PORTS
+        value: "8080"
+      - key: DatabaseSettings__UseSqlServer
+        value: "false"
+      - key: ConnectionStrings__DefaultConnection
+        value: Data Source=ExamNexus.db
+      - key: JwtSettings__Secret
+        value: ExamNexus_SuperSecretSaaSKey_2026_Minimum32CharsLong!@#$
+      - key: JwtSettings__Issuer
+        value: ExamNexus
+      - key: JwtSettings__Audience
+        value: ExamNexus-ProctorApp
+      - key: JwtSettings__ExpiryMinutes
+        value: "60"
