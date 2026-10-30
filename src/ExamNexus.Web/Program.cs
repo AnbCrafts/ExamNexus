@@ -120,6 +120,15 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// Forwarded headers for Cloud Proxy support (Render, Azure, Railway)
+var forwardedOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
+};
+forwardedOptions.KnownNetworks.Clear();
+forwardedOptions.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedOptions);
+
 app.UseSecurityHeaders();
 app.UseHttpsRedirection();
 app.UseStaticFiles();

@@ -14,8 +14,27 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         var useSqlServer = configuration.GetValue<bool>("DatabaseSettings:UseSqlServer");
-        var connectionString = configuration.GetConnectionString("DefaultConnection") 
-            ?? "Data Source=ExamNexus.db";
+        var connectionString = useSqlServer
+            ? (configuration.GetConnectionString("SqlServerConnection") ?? configuration.GetConnectionString("DefaultConnection") ?? string.Empty)
+            : (configuration.GetConnectionString("DefaultConnection") ?? "Data Source=ExamNexus.db");
+
+        // Automatically ensure parent directory exists if using file-based SQLite (e.g. on Docker persistent disk mounts)
+        if (!useSqlServer && connectionString.Contains("Data Source=", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                var filePath = connectionString.Split('=', 2)[1].Trim().Trim(';', '"');
+                var dir = Path.GetDirectoryName(filePath);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
+            }
+            catch
+            {
+                // Ignore if not a standard file path
+            }
+        }
 
         services.AddDbContext<ApplicationDbContext>(options =>
         {
