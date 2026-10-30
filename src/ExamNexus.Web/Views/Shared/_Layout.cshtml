@@ -25,6 +25,11 @@
             --text-muted: #64748b;
         }
 
+        html {
+            overflow-x: hidden;
+            width: 100%;
+        }
+
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: var(--bg-canvas);
@@ -32,6 +37,9 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow-x: hidden;
+            width: 100%;
+            position: relative;
         }
 
         .navbar-examnexus {
@@ -307,7 +315,7 @@
 
                 <!-- Navigation Links & User Menu (Collapsible) -->
                 <div class="collapse navbar-collapse" id="nexusNavbar">
-                    <ul class="navbar-nav mx-auto my-2 my-xl-0 align-items-xl-center gap-1">
+                    <ul class="navbar-nav ms-xl-3 me-xl-auto my-2 my-xl-0 align-items-xl-center gap-1">
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index">
                                 <i class="fa-solid fa-house"></i>
@@ -466,36 +474,42 @@
         </nav>
     </header>
 
-    <div class="container-fluid px-lg-4 py-4 flex-grow-1">
+    <main class="flex-grow-1 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "p-0" : "container-fluid px-lg-4 py-4")" style="overflow-x: hidden;">
         @if (TempData["SuccessMessage"] != null)
         {
-            <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm d-flex align-items-center gap-2" role="alert">
-                <i class="fa-solid fa-circle-check fs-5"></i>
-                <div>@TempData["SuccessMessage"]</div>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="container-fluid px-lg-4 pt-3">
+                <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm d-flex align-items-center gap-2" role="alert">
+                    <i class="fa-solid fa-circle-check fs-5"></i>
+                    <div>@TempData["SuccessMessage"]</div>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
             </div>
         }
         @if (TempData["ErrorMessage"] != null)
         {
-            <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm d-flex align-items-center gap-2" role="alert">
-                <i class="fa-solid fa-triangle-exclamation fs-5"></i>
-                <div>@TempData["ErrorMessage"]</div>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="container-fluid px-lg-4 pt-3">
+                <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm d-flex align-items-center gap-2" role="alert">
+                    <i class="fa-solid fa-triangle-exclamation fs-5"></i>
+                    <div>@TempData["ErrorMessage"]</div>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
             </div>
         }
         @if (TempData["InfoMessage"] != null)
         {
-            <div class="alert alert-info alert-dismissible fade show border-0 shadow-sm d-flex align-items-center gap-2" role="alert">
-                <i class="fa-solid fa-circle-info fs-5"></i>
-                <div>@TempData["InfoMessage"]</div>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="container-fluid px-lg-4 pt-3">
+                <div class="alert alert-info alert-dismissible fade show border-0 shadow-sm d-flex align-items-center gap-2" role="alert">
+                    <i class="fa-solid fa-circle-info fs-5"></i>
+                    <div>@TempData["InfoMessage"]</div>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
             </div>
         }
 
         @RenderBody()
-    </div>
+    </main>
 
-    <footer>
+    <footer style="overflow-x: hidden;">
         <div class="container-fluid px-lg-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
             <div>
                 <strong>ExamNexus</strong> &mdash; Cloud Multi-Tenant Assessment &amp; Live WebSocket Proctored Platform
