@@ -125,6 +125,89 @@ public class AccountController : Controller
         return View(defaultModel);
     }
 
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<IActionResult> DemoLogin(string role)
+    {
+        // 1. Sign out any current session
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            await _signInManager.SignOutAsync();
+            HttpContext.Session.Clear();
+        }
+
+        var target = (role ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (target == "superadmin")
+        {
+            var user = await _userManager.FindByEmailAsync("superadmin@examnexus.com");
+            if (user != null)
+            {
+                var sysClaims = new List<Claim>
+                {
+                    new("FullName", user.FullName),
+                    new("UserCode", user.UserCode),
+                    new("IsSystemAdmin", "true")
+                };
+                await _signInManager.SignInWithClaimsAsync(user, isPersistent: true, sysClaims);
+                _logger.LogInformation("1-Click demo authentication: Global SuperAdmin {Email}", user.Email);
+                return RedirectToAction("Index", "Admin");
+            }
+        }
+        else if (target == "instructor")
+        {
+            var user = await _userManager.FindByEmailAsync("instructor@acme.com");
+            var tenant = await _dbContext.Tenants.FirstOrDefaultAsync(t => t.Identifier == "acme-corp" && t.IsActive);
+            if (user != null && tenant != null)
+            {
+                var claims = new List<Claim>
+                {
+                    new("TenantId", tenant.Id.ToString()),
+                    new("TenantIdentifier", tenant.Identifier),
+                    new("TenantName", tenant.Name),
+                    new("FullName", user.FullName),
+                    new("UserCode", user.UserCode)
+                };
+                await _signInManager.SignInWithClaimsAsync(user, isPersistent: true, claims);
+                Response.Cookies.Append(".ExamNexus.Tenant", tenant.Identifier, new CookieOptions
+                {
+                    HttpOnly = true,
+                    SameSite = SameSiteMode.Lax,
+                    Expires = DateTimeOffset.UtcNow.AddDays(30)
+                });
+                _logger.LogInformation("1-Click demo authentication: Instructor {Email}", user.Email);
+                return RedirectToAction("Index", "Exam");
+            }
+        }
+        else if (target == "proctor")
+        {
+            var user = await _userManager.FindByEmailAsync("proctor@acme.com");
+            var tenant = await _dbContext.Tenants.FirstOrDefaultAsync(t => t.Identifier == "acme-corp" && t.IsActive);
+            if (user != null && tenant != null)
+            {
+                var claims = new List<Claim>
+                {
+                    new("TenantId", tenant.Id.ToString()),
+                    new("TenantIdentifier", tenant.Identifier),
+                    new("TenantName", tenant.Name),
+                    new("FullName", user.FullName),
+                    new("UserCode", user.UserCode)
+                };
+                await _signInManager.SignInWithClaimsAsync(user, isPersistent: true, claims);
+                Response.Cookies.Append(".ExamNexus.Tenant", tenant.Identifier, new CookieOptions
+                {
+                    HttpOnly = true,
+                    SameSite = SameSiteMode.Lax,
+                    Expires = DateTimeOffset.UtcNow.AddDays(30)
+                });
+                _logger.LogInformation("1-Click demo authentication: Proctor {Email}", user.Email);
+                return RedirectToAction("Index", "Proctor");
+            }
+        }
+
+        return RedirectToAction("Login", new { role });
+    }
+
     [HttpPost]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
